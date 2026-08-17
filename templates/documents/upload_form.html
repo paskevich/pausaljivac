@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Загрузка документа — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Загрузить документ</h1>
+<form class="stacked-form" method="post" enctype="multipart/form-data">
+  <label for="category">Категория *</label>
+  <select id="category" name="category" required>
+    {% for c in categories %}
+    <option value="{{ c }}">{{ category_labels[c] }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="file">Файл *</label>
+  <input id="file" name="file" type="file" required>
+
+  <label for="title">Название</label>
+  <input id="title" name="title" placeholder="По умолчанию — имя файла">
+
+  <label for="client_id">Клиент</label>
+  <select id="client_id" name="client_id">
+    <option value="">—</option>
+    {% for c in clients %}
+    <option value="{{ c['id'] }}">{{ c['name'] }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="period_year">Год периода</label>
+  <input id="period_year" name="period_year" placeholder="напр. 2026">
+
+  <label for="period_month">Месяц периода</label>
+  <input id="period_month" name="period_month" placeholder="1-12">
+
+  <label for="tags">Теги (через запятую)</label>
+  <input id="tags" name="tags" placeholder="напр. rešenje, 2026, важное">
+
+  <label for="notes">Заметки</label>
+  <textarea id="notes" name="notes" rows="3"></textarea>
+
+  <div class="actions">
+    <button type="submit">Загрузить</button>
+    <a class="btn btn-secondary" href="{{ url_for('documents.list_documents') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

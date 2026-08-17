@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Удалить инвойс — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Удалить инвойс {{ invoice['invoice_number'] }}?</h1>
+<div class="card">
+  <p><strong>Клиент:</strong> {{ invoice['client_name'] }}</p>
+  <p><strong>Дата выставления:</strong> {{ invoice['issue_date'] }}</p>
+  <p><strong>Сумма:</strong> {{ '%.2f'|format(invoice['amount']) }} {{ invoice['currency'] }}</p>
+  <p class="hint">
+    PDF будет безвозвратно удалён, запись — из базы данных. Номер счёта повторно не используется.
+    Это отличается от «Отменить» на странице инвойса — та кнопка просто исключает счёт из лимитов, сохраняя запись для истории.
+  </p>
+</div>
+<form method="post" action="{{ url_for('invoices.delete_invoice', invoice_id=invoice['id']) }}">
+  <button type="submit">Да, удалить безвозвратно</button>
+  <a class="btn btn-secondary" href="{{ url_for('invoices.view_invoice', invoice_id=invoice['id']) }}">Отмена</a>
+</form>
+{% endblock %}

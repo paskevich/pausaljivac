@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Удалить документ — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Удалить документ?</h1>
+<div class="card">
+  <p><strong>{{ doc['title'] }}</strong></p>
+  <p class="hint">Файл будет безвозвратно удалён с диска, запись — из базы данных. Отменить это действие нельзя.</p>
+  {% if linked_invoice %}
+  <p class="hint">⚠ Это PDF инвойса {{ linked_invoice['invoice_number'] }}. Сам инвойс (номер, суммы, курс) останется в системе, но без прикреплённого файла. Чтобы удалить инвойс целиком — используйте кнопку удаления на странице этого инвойса.</p>
+  {% endif %}
+</div>
+<form method="post" action="{{ url_for('documents.delete_document', document_id=doc['id']) }}">
+  <button type="submit">Да, удалить безвозвратно</button>
+  <a class="btn btn-secondary" href="{{ url_for('documents.list_documents') }}">Отмена</a>
+</form>
+{% endblock %}

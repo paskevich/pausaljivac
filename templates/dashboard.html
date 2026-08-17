@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Дашборд — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Дашборд</h1>
+
+<p>
+  <a class="btn" href="{{ url_for('invoices.new_invoice') }}">+ Новый инвойс</a>
+  <a class="btn btn-secondary" href="{{ url_for('clients.new_client') }}">+ Клиент</a>
+  <a class="btn btn-secondary" href="{{ url_for('documents.upload_document') }}">+ Документ</a>
+  <a class="btn btn-secondary" href="{{ url_for('tax.list_payments') }}">Платежи</a>
+</p>
+
+<div class="dashboard-grid">
+  <div class="card">
+    <h2>Лимит паушала (календарный год)</h2>
+    <div class="progress-row">
+      <div class="progress-bar">
+        <div class="progress-bar-fill progress-{{ limits.pausal.level }}" style="width: {{ limits.pausal.ratio * 100 }}%"></div>
+      </div>
+      <span class="progress-label">{{ limits.pausal.percent }}%</span>
+    </div>
+    <p>{{ '%.0f'|format(limits.pausal.total) }} / {{ '%.0f'|format(limits.pausal.limit) }} RSD</p>
+    {% if limits.pausal.level == 'danger' %}
+    <p class="hint">⚠ Внимание: близко к лимиту паушального режима (6 000 000 RSD за календарный год).</p>
+    {% elif limits.pausal.level == 'warn' %}
+    <p class="hint">Использовано более 80% годового лимита паушального режима.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Порог НДС (скользящие 365 дней)</h2>
+    <div class="progress-row">
+      <div class="progress-bar">
+        <div class="progress-bar-fill progress-{{ limits.vat.level }}" style="width: {{ limits.vat.ratio * 100 }}%"></div>
+      </div>
+      <span class="progress-label">{{ limits.vat.percent }}%</span>
+    </div>
+    <p>{{ '%.0f'|format(limits.vat.total) }} / {{ '%.0f'|format(limits.vat.limit) }} RSD</p>
+    {% if limits.vat.level == 'danger' %}
+    <p class="hint">⚠ Внимание: приближаетесь к порогу обязательной регистрации НДС (8 000 000 RSD за скользящие 365 дней).</p>
+    {% elif limits.vat.level == 'warn' %}
+    <p class="hint">Использовано более 80% порога НДС за скользящие 365 дней.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Ближайшие платежи</h2>
+  {% if upcoming_payments %}
+  <table>
+    <thead><tr><th>Период</th><th>Срок</th><th>Сумма, RSD</th><th></th></tr></thead>
+    <tbody>
+      {% for p in upcoming_payments %}
+      <tr>
+        <td>{{ p['period_month'] }}.{{ p['period_year'] }}</td>
+        <td>
+          {{ p['due_date'] }}
+          {% if p['due_date'] < today %}<span class="badge badge-overdue">просрочен</span>{% endif %}
+        </td>
+        <td>{{ '%.2f'|format(p['amount_due']) }}</td>
+        <td>
+          <form method="post" action="{{ url_for('tax.mark_paid', payment_id=p['id']) }}">
+            <button type="submit">Оплачено</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">Неоплаченных платежей нет. Если решение налоговой ещё не добавлено — <a href="{{ url_for('tax.new_resenje') }}">добавьте его</a>.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Быстрая статистика</h2>
+  <p>Инвойсов за {{ today[:4] }} год: {{ invoice_stats['cnt'] }}, на сумму {{ '%.0f'|format(invoice_stats['total_rsd']) }} RSD.</p>
+  <p>Неоплаченных налоговых периодов: {{ unpaid_count }}.</p>
+</div>
+{% endblock %}

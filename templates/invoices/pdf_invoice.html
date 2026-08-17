@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 2cm; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 11pt; color: #111; }
+  h1 { font-size: 18pt; margin-bottom: 0.2em; }
+  .muted { color: #555; }
+  .parties { display: flex; justify-content: space-between; margin: 1.5em 0; }
+  .parties .block { width: 48%; }
+  .parties h3 { font-size: 10pt; text-transform: uppercase; color: #777; margin-bottom: 0.3em; }
+  table.items { width: 100%; border-collapse: collapse; margin-top: 1.5em; }
+  table.items th, table.items td { border: 1px solid #ccc; padding: 0.5em 0.6em; text-align: left; }
+  table.items th { background: #f2f2f2; }
+  .totals { margin-top: 1em; text-align: right; font-size: 12pt; }
+  .no-vat { margin-top: 2em; font-size: 9.5pt; color: #444; }
+  .footer { margin-top: 3em; font-size: 9pt; color: #777; }
+</style>
+</head>
+<body>
+  <h1>Invoice {{ invoice.invoice_number }}</h1>
+  <p class="muted">
+    Issue date: {{ invoice.issue_date }}
+    {% if invoice.service_date %} &nbsp;|&nbsp; Service date: {{ invoice.service_date }}{% endif %}
+    {% if invoice.due_date %} &nbsp;|&nbsp; Payment due date: {{ invoice.due_date }}{% endif %}
+  </p>
+
+  <div class="parties">
+    <div class="block">
+      <h3>Issuer</h3>
+      <p>
+        {{ settings.business_name }}<br>
+        {{ settings.owner_full_name }}<br>
+        {{ settings.address }}<br>
+        PIB (Tax ID): {{ settings.pib }}<br>
+        Registration number: {{ settings.maticni_broj }}<br>
+        {{ settings.bank_name }}, IBAN: {{ settings.bank_iban }}
+      </p>
+    </div>
+    <div class="block">
+      <h3>Bill to</h3>
+      <p>
+        {{ client.name }}<br>
+        {{ client.address or '' }}<br>
+        {{ client.country or '' }}
+      </p>
+    </div>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr><th>Description</th><th>Amount</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ invoice.description }}</td>
+        <td>{{ "%.2f"|format(invoice.amount) }} {{ invoice.currency }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <strong>Total: {{ "%.2f"|format(invoice.amount) }} {{ invoice.currency }}</strong>
+    <div class="muted">(approx. {{ "%.2f"|format(invoice.amount_rsd) }} RSD at NBS middle exchange rate)</div>
+  </div>
+
+  <p class="no-vat">{{ settings.no_vat_clause }}</p>
+
+  <p class="footer">This invoice was generated electronically and is valid without a stamp or signature.</p>
+</body>
+</html>

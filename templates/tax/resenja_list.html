@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Налоги — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Решения налоговой (rešenja)</h1>
+<p>
+  <a class="btn" href="{{ url_for('tax.new_resenje') }}">+ Новое решение</a>
+  <a class="btn btn-secondary" href="{{ url_for('tax.list_payments') }}">Платежи</a>
+</p>
+<table>
+  <thead>
+    <tr><th>№</th><th>Действует с</th><th>По</th><th>Паушальный налог</th><th>PIO</th><th>Здоровье</th><th>Безработица</th><th>Документ</th></tr>
+  </thead>
+  <tbody>
+    {% for r in resenja %}
+    <tr>
+      <td>{{ r['resenje_number'] or '—' }}</td>
+      <td>{{ r['valid_from'] }}</td>
+      <td>{{ r['valid_to'] or '—' }}</td>
+      <td>{{ '%.2f'|format(r['pausal_tax_amount']) }}</td>
+      <td>{{ '%.2f'|format(r['pio_contribution']) }}</td>
+      <td>{{ '%.2f'|format(r['health_contribution']) }}</td>
+      <td>{{ '%.2f'|format(r['unemployment_contribution']) }}</td>
+      <td>
+        {% if r['doc_id'] %}
+        <a href="{{ url_for('documents.view_document', document_id=r['doc_id']) }}">Просмотр</a>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8">Решений пока нет.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Клиент' if client else 'Новый клиент' }} — Paušal 3000{% endblock %}
+{% block content %}
+<h1>{{ 'Редактировать клиента' if client else 'Новый клиент' }}</h1>
+<form class="stacked-form" method="post">
+  <label for="name">Имя / компания *</label>
+  <input id="name" name="name" required value="{{ client['name'] if client else '' }}">
+
+  <label for="country">Страна</label>
+  <input id="country" name="country" value="{{ client['country'] if client else '' }}">
+
+  <label for="address">Адрес</label>
+  <input id="address" name="address" value="{{ client['address'] if client else '' }}">
+
+  <label for="email">Email</label>
+  <input id="email" name="email" type="email" value="{{ client['email'] if client else '' }}">
+
+  <label for="contact_person">Контактное лицо</label>
+  <input id="contact_person" name="contact_person" value="{{ client['contact_person'] if client else '' }}">
+
+  <label for="default_currency">Валюта по умолчанию</label>
+  <select id="default_currency" name="default_currency">
+    {% for cur in currencies %}
+    <option value="{{ cur }}" {% if client and client['default_currency'] == cur %}selected{% endif %}>{{ cur }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="notes">Заметки</label>
+  <textarea id="notes" name="notes" rows="3">{{ client['notes'] if client else '' }}</textarea>
+
+  <div class="actions">
+    <button type="submit">Сохранить</button>
+    <a class="btn btn-secondary" href="{{ url_for('clients.list_clients') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

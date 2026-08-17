@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Налоговые платежи — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Налоговые платежи</h1>
+<p><a class="btn btn-secondary" href="{{ url_for('tax.list_resenja') }}">← Решения</a></p>
+<table>
+  <thead>
+    <tr><th>Период</th><th>Срок оплаты</th><th>Сумма, RSD</th><th>Статус</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for p in payments %}
+    <tr>
+      <td>{{ p['period_month'] }}.{{ p['period_year'] }}</td>
+      <td>{{ p['due_date'] }}</td>
+      <td>{{ '%.2f'|format(p['amount_due']) }}</td>
+      <td>
+        {% if p['status'] == 'paid' %}
+        <span class="badge badge-paid">Оплачен</span>
+        {% elif p['due_date'] < today %}
+        <span class="badge badge-overdue">Просрочен</span>
+        {% else %}
+        <span class="badge badge-unpaid">Не оплачен</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if p['status'] != 'paid' %}
+        <form method="post" action="{{ url_for('tax.mark_paid', payment_id=p['id']) }}">
+          <button type="submit">Отметить оплаченным</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">Платежей пока нет — добавьте решение налоговой.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

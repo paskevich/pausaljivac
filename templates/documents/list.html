@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Документы — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Документы</h1>
+<p><a class="btn" href="{{ url_for('documents.upload_document') }}">+ Загрузить документ</a></p>
+
+<form class="filters" method="get">
+  <div>
+    <label for="category">Категория</label>
+    <select id="category" name="category">
+      <option value="">Все</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ category_labels[c] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="client_id">Клиент</label>
+    <select id="client_id" name="client_id">
+      <option value="">Все</option>
+      {% for c in clients %}
+      <option value="{{ c['id'] }}" {% if filters.client_id|string == c['id']|string %}selected{% endif %}>{{ c['name'] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="tag">Тег</label>
+    <select id="tag" name="tag">
+      <option value="">Все</option>
+      {% for t in all_tags %}
+      <option value="{{ t['name'] }}" {% if filters.tag == t['name'] %}selected{% endif %}>{{ t['name'] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="year">Год</label>
+    <input id="year" name="year" value="{{ filters.year }}" style="width:6rem">
+  </div>
+  <div><button type="submit">Фильтровать</button></div>
+</form>
+
+<table>
+  <thead>
+    <tr><th>Название</th><th>Категория</th><th>Клиент</th><th>Период</th><th>Теги</th><th>Загружен</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for d in documents %}
+    <tr>
+      <td>{{ d['title'] }}</td>
+      <td>{{ category_labels[d['category']] }}</td>
+      <td>{{ d['client_name'] or '—' }}</td>
+      <td>{% if d['period_year'] %}{{ d['period_month'] or '' }} {{ d['period_year'] }}{% else %}—{% endif %}</td>
+      <td>{% if d['tag_names'] %}{% for t in d['tag_names'].split(',') %}<span class="tag">{{ t }}</span>{% endfor %}{% else %}—{% endif %}</td>
+      <td>{{ d['uploaded_at'] }}</td>
+      <td>
+        <a class="btn-secondary" href="{{ url_for('documents.view_document', document_id=d['id']) }}">Просмотр</a>
+        <a class="btn-secondary" href="{{ url_for('documents.download_document', document_id=d['id']) }}">Скачать</a>
+        <a class="btn-secondary" href="{{ url_for('documents.confirm_delete_document', document_id=d['id']) }}">Удалить</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7">Документов пока нет.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

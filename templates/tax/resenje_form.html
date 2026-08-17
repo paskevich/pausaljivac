@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Новое решение — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Новое решение налоговой</h1>
+<form class="stacked-form" method="post" enctype="multipart/form-data">
+  <label for="resenje_number">Номер решения</label>
+  <input id="resenje_number" name="resenje_number">
+
+  <label for="valid_from">Действует с *</label>
+  <input id="valid_from" name="valid_from" type="date" required>
+
+  <label for="valid_to">Действует по (если известно)</label>
+  <input id="valid_to" name="valid_to" type="date">
+
+  <label for="pausal_tax_amount">Паушальный налог, RSD/мес *</label>
+  <input id="pausal_tax_amount" name="pausal_tax_amount" type="number" step="0.01" required>
+
+  <label for="pio_contribution">Взнос ПИО (пенсия), RSD/мес *</label>
+  <input id="pio_contribution" name="pio_contribution" type="number" step="0.01" required>
+
+  <label for="health_contribution">Взнос на здравоохранение, RSD/мес *</label>
+  <input id="health_contribution" name="health_contribution" type="number" step="0.01" required>
+
+  <label for="unemployment_contribution">Взнос на случай безработицы, RSD/мес</label>
+  <input id="unemployment_contribution" name="unemployment_contribution" type="number" step="0.01" value="0">
+
+  <label for="file">Файл решения / QR для оплаты</label>
+  <input id="file" name="file" type="file">
+
+  <label for="notes">Заметки</label>
+  <textarea id="notes" name="notes" rows="2"></textarea>
+
+  <div class="actions">
+    <button type="submit">Сохранить</button>
+    <a class="btn btn-secondary" href="{{ url_for('tax.list_resenja') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

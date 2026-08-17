@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Инвойс {{ invoice['invoice_number'] }} — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Инвойс {{ invoice['invoice_number'] }}</h1>
+<span class="badge badge-{{ invoice['status'] }}">{{ status_labels[invoice['status']] }}</span>
+
+<div class="card">
+  <p><strong>Клиент:</strong> {{ invoice['client_name'] }}</p>
+  <p><strong>Дата выставления:</strong> {{ invoice['issue_date'] }}</p>
+  <p><strong>Дата услуги:</strong> {{ invoice['service_date'] or '—' }}</p>
+  <p><strong>Срок оплаты:</strong> {{ invoice['due_date'] or '—' }}</p>
+  <p><strong>Сумма:</strong> {{ '%.2f'|format(invoice['amount']) }} {{ invoice['currency'] }}</p>
+  <p><strong>Сумма в RSD:</strong> {{ '%.2f'|format(invoice['amount_rsd']) if invoice['amount_rsd'] is not none else '—' }}
+     (курс {{ invoice['exchange_rate'] }} на {{ invoice['exchange_rate_date'] }}, источник: {{ invoice['exchange_rate_source'] }})</p>
+  <p><strong>Описание:</strong> {{ invoice['description'] }}</p>
+</div>
+
+<p>
+  {% if invoice['pdf_path'] %}
+  <a class="btn" href="{{ url_for('invoices.download_pdf', invoice_id=invoice['id']) }}" target="_blank">Открыть PDF</a>
+  {% endif %}
+</p>
+
+<form method="post" action="{{ url_for('invoices.change_status', invoice_id=invoice['id']) }}" style="display:inline">
+  <input type="hidden" name="status" value="paid">
+  <button type="submit" class="btn-secondary" {% if invoice['status'] != 'issued' %}disabled{% endif %}>Отметить оплаченным</button>
+</form>
+<form method="post" action="{{ url_for('invoices.change_status', invoice_id=invoice['id']) }}" style="display:inline">
+  <input type="hidden" name="status" value="cancelled">
+  <button type="submit" class="btn-secondary" {% if invoice['status'] == 'cancelled' %}disabled{% endif %}>Отменить</button>
+</form>
+<a class="btn btn-secondary" href="{{ url_for('invoices.confirm_delete_invoice', invoice_id=invoice['id']) }}">Удалить</a>
+{% endblock %}
