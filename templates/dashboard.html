@@ -19,7 +19,8 @@
       </div>
       <span class="progress-label">{{ limits.pausal.percent }}%</span>
     </div>
-    <p>{{ '%.0f'|format(limits.pausal.total) }} / {{ '%.0f'|format(limits.pausal.limit) }} RSD</p>
+    <p>{{ limits.pausal.total|money(0) }} / {{ limits.pausal.limit|money(0) }} RSD</p>
+    <p class="hint">Остаток до конца года: {{ limits.pausal.remaining|money(0) }} RSD ({{ limits.pausal.remaining_per_month|money(0) }} RSD/мес. на {{ limits.pausal.months_left }} оставшихся мес.)</p>
     {% if limits.pausal.level == 'danger' %}
     <p class="hint">⚠ Внимание: близко к лимиту паушального режима (6 000 000 RSD за календарный год).</p>
     {% elif limits.pausal.level == 'warn' %}
@@ -35,7 +36,7 @@
       </div>
       <span class="progress-label">{{ limits.vat.percent }}%</span>
     </div>
-    <p>{{ '%.0f'|format(limits.vat.total) }} / {{ '%.0f'|format(limits.vat.limit) }} RSD</p>
+    <p>{{ limits.vat.total|money(0) }} / {{ limits.vat.limit|money(0) }} RSD</p>
     {% if limits.vat.level == 'danger' %}
     <p class="hint">⚠ Внимание: приближаетесь к порогу обязательной регистрации НДС (8 000 000 RSD за скользящие 365 дней).</p>
     {% elif limits.vat.level == 'warn' %}
@@ -57,7 +58,7 @@
           {{ p['due_date'] }}
           {% if p['due_date'] < today %}<span class="badge badge-overdue">просрочен</span>{% endif %}
         </td>
-        <td>{{ '%.2f'|format(p['amount_due']) }}</td>
+        <td>{{ p['amount_due']|money }}</td>
         <td>
           <form method="post" action="{{ url_for('tax.mark_paid', payment_id=p['id']) }}">
             <button type="submit">Оплачено</button>
@@ -74,7 +75,7 @@
 
 <div class="card">
   <h2>Быстрая статистика</h2>
-  <p>Инвойсов за {{ today[:4] }} год: {{ invoice_stats['cnt'] }}, на сумму {{ '%.0f'|format(invoice_stats['total_rsd']) }} RSD.</p>
+  <p>Инвойсов за {{ today[:4] }} год: {{ invoice_stats['cnt'] }}, на сумму {{ invoice_stats['total_rsd']|money(0) }} RSD.</p>
   <p>Неоплаченных налоговых периодов: {{ unpaid_count }}.</p>
 </div>
 {% endblock %}

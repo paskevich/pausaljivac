@@ -54,6 +54,11 @@ def limit_status(total, limit):
 
 def get_dashboard_limits(db):
     pausal = limit_status(current_calendar_year_total(db), config.PAUSAL_LIMIT_RSD)
+    pausal["remaining"] = max(pausal["limit"] - pausal["total"], 0)
+    months_left = 12 - date.today().month + 1
+    pausal["months_left"] = months_left
+    pausal["remaining_per_month"] = pausal["remaining"] / months_left if months_left else 0
+
     vat = limit_status(rolling_365_day_total(db), config.VAT_THRESHOLD_RSD)
     return {
         "pausal": pausal,
