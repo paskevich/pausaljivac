@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Проверка данных — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Проверьте данные перед подписанием</h1>
+
+{% if not has_signature %}
+<p class="hint">⚠ Подпись ещё не загружена — сначала загрузите PNG в <a href="{{ url_for('settings.edit_settings') }}">Настройках</a>.</p>
+{% endif %}
+
+{% if invoice %}
+<p class="hint">Инвойс {{ parsed.invoice_number }} найден в системе ({{ invoice['client_name'] }}) — дата подставлена автоматически.</p>
+{% elif parsed.invoice_number %}
+<p class="hint">⚠ Инвойс {{ parsed.invoice_number }} не найден в системе — укажите дату инвойса вручную.</p>
+{% else %}
+<p class="hint">⚠ Не удалось распознать номер инвойса в бланке — проверьте и укажите вручную.</p>
+{% endif %}
+
+<form class="stacked-form" method="post" action="{{ url_for('inflow_form.generate') }}">
+  <input type="hidden" name="token" value="{{ token }}">
+  <input type="hidden" name="invoice_id" value="{{ invoice['id'] if invoice else '' }}">
+
+  <label for="invoice_number">Номер инвойса (Br. fakture/prof.) *</label>
+  <input id="invoice_number" name="invoice_number" required value="{{ parsed.invoice_number }}">
+
+  <label>Сумма (Iznos bruto potraživanja)</label>
+  <input value="{{ parsed.currency }} {{ parsed.amount_display }}" disabled>
+  <p class="hint">Берётся дословно из бланка банка, не редактируется.</p>
+  <input type="hidden" name="currency" value="{{ parsed.currency }}">
+  <input type="hidden" name="amount_display" value="{{ parsed.amount_display }}">
+
+  <label for="invoice_date_display">Дата инвойса (Godina fakture/prof.), ДД/ММ/ГГГГ *</label>
+  <input id="invoice_date_display" name="invoice_date_display" required
+         pattern="\d{2}/\d{2}/\d{4}" placeholder="30/06/2025" value="{{ default_date }}">
+
+  <label for="sifra_osnova">Šifra osnova *</label>
+  <input id="sifra_osnova" name="sifra_osnova" required value="{{ sifra_osnova }}">
+
+  <label for="place">Место подписания *</label>
+  <input id="place" name="place" required value="{{ place }}">
+
+  <div class="actions">
+    <button type="submit" {% if not has_signature %}disabled{% endif %}>Заполнить и подписать</button>
+    <a class="btn btn-secondary" href="{{ url_for('inflow_form.upload') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

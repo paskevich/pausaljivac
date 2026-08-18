@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Obaveštenje o prilivu — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Заполнить «Obaveštenje o prilivu»</h1>
+<p class="hint">
+  Загрузите пустой PDF-бланк, который прислал банк. Номер инвойса и сумма распознаются
+  автоматически из самого бланка (банк уже их туда вписывает); дату инвойса и код
+  основания можно будет проверить и поправить на следующем шаге.
+</p>
+{% if not has_signature %}
+<p class="hint">⚠ Подпись ещё не загружена — сначала загрузите PNG в <a href="{{ url_for('settings.edit_settings') }}">Настройках</a>, иначе форму сгенерировать не получится.</p>
+{% endif %}
+<form class="stacked-form" method="post" enctype="multipart/form-data">
+  <label for="file">PDF-бланк от банка *</label>
+  <input id="file" name="file" type="file" accept="application/pdf" required>
+  <div class="actions">
+    <button type="submit">Распознать</button>
+    <a class="btn btn-secondary" href="{{ url_for('documents.list_documents') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

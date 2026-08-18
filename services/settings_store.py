@@ -11,6 +11,8 @@ DEFAULTS = {
     "invoice_number_format": "{seq}-{year}-{month}",
     "no_vat_clause": "VAT is not charged in accordance with Article 33 of the VAT Law of the Republic of Serbia.",
     "tax_due_day": "15",
+    "bank_form_sifra_osnova": "302",
+    "bank_form_place": "Novi Sad",
 }
 
 

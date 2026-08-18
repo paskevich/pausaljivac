@@ -16,4 +16,19 @@
     <button type="submit">Сохранить</button>
   </div>
 </form>
+
+<div class="card">
+  <h2>Подпись</h2>
+  <p class="hint">
+    {% if has_signature %}Подпись загружена и используется для автозаполнения банковских форм.
+    {% else %}Подпись ещё не загружена.{% endif %}
+  </p>
+  <form method="post" action="{{ url_for('settings.upload_signature') }}" enctype="multipart/form-data">
+    <label for="signature">PNG-файл подписи (с прозрачным фоном)</label>
+    <input id="signature" name="signature" type="file" accept="image/png" required>
+    <div class="actions">
+      <button type="submit">{% if has_signature %}Заменить{% else %}Загрузить{% endif %}</button>
+    </div>
+  </form>
+</div>
 {% endblock %}
