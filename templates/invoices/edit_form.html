@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Изменить инвойс {{ invoice['invoice_number'] }} — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Изменить инвойс {{ invoice['invoice_number'] }}</h1>
+<p class="hint">Сумма, валюта, курс и дата выставления не редактируются — от них зависят PDF и учёт лимитов. Для этого используйте статус/удаление на странице инвойса.</p>
+<form class="stacked-form" method="post">
+  <label for="client_id">Клиент *</label>
+  <select id="client_id" name="client_id" required>
+    <option value="">—</option>
+    {% for c in clients %}
+    <option value="{{ c['id'] }}" {% if form.get('client_id')|string == c['id']|string %}selected{% endif %}>{{ c['name'] }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="contract_document_id">Договор</label>
+  <select id="contract_document_id" name="contract_document_id">
+    <option value="">—</option>
+    {% for c in contracts %}
+    <option value="{{ c['id'] }}" {% if form.get('contract_document_id')|string == c['id']|string %}selected{% endif %}>{{ c['title'] }}{% if c['client_name'] %} — {{ c['client_name'] }}{% endif %}</option>
+    {% endfor %}
+  </select>
+
+  <label for="service_date">Дата оказания услуги</label>
+  <input id="service_date" name="service_date" type="date" value="{{ form.get('service_date', '') or '' }}">
+
+  <label for="due_date">Срок оплаты</label>
+  <input id="due_date" name="due_date" type="date" value="{{ form.get('due_date', '') or '' }}">
+
+  <label for="description">Описание услуги *</label>
+  <textarea id="description" name="description" rows="3" required>{{ form.get('description', '') }}</textarea>
+
+  <label for="notes">Заметки</label>
+  <textarea id="notes" name="notes" rows="2">{{ form.get('notes', '') or '' }}</textarea>
+
+  <div class="actions">
+    <button type="submit">Сохранить</button>
+    <a class="btn btn-secondary" href="{{ url_for('invoices.view_invoice', invoice_id=invoice['id']) }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

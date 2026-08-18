@@ -11,6 +11,14 @@
     {% endfor %}
   </select>
 
+  <label for="contract_document_id">Договор</label>
+  <select id="contract_document_id" name="contract_document_id">
+    <option value="">—</option>
+    {% for c in contracts %}
+    <option value="{{ c['id'] }}" {% if form.get('contract_document_id')|string == c['id']|string %}selected{% endif %}>{{ c['title'] }}{% if c['client_name'] %} — {{ c['client_name'] }}{% endif %}</option>
+    {% endfor %}
+  </select>
+
   <label for="currency">Валюта *</label>
   <select id="currency" name="currency">
     {% for cur in currencies %}

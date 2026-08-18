@@ -48,10 +48,12 @@ CREATE TABLE IF NOT EXISTS invoices (
     amount_rsd            NUMERIC,
     status                TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','issued','paid','cancelled')),
     pdf_path              TEXT,
+    contract_document_id  INTEGER REFERENCES documents(id),
     notes                 TEXT,
     created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_invoices_issue_date ON invoices(issue_date);
+CREATE INDEX IF NOT EXISTS idx_invoices_contract ON invoices(contract_document_id);
 
 CREATE TABLE IF NOT EXISTS tags (
     id   INTEGER PRIMARY KEY,

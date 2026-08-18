@@ -45,14 +45,71 @@ def list_invoices():
 def view_invoice(invoice_id):
     db = get_db()
     invoice = db.execute(
-        "SELECT invoices.*, clients.name AS client_name FROM invoices "
-        "JOIN clients ON clients.id = invoices.client_id WHERE invoices.id = ?",
+        "SELECT invoices.*, clients.name AS client_name, "
+        "documents.title AS contract_title FROM invoices "
+        "JOIN clients ON clients.id = invoices.client_id "
+        "LEFT JOIN documents ON documents.id = invoices.contract_document_id "
+        "WHERE invoices.id = ?",
         (invoice_id,),
     ).fetchone()
     if invoice is None:
         abort(404)
     return render_template(
         "invoices/view.html", invoice=invoice, status_labels=STATUS_LABELS
+    )
+
+
+@bp.route("/<int:invoice_id>/edit", methods=["GET", "POST"])
+def edit_invoice(invoice_id):
+    db = get_db()
+    invoice = db.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,)).fetchone()
+    if invoice is None:
+        abort(404)
+
+    clients = db.execute(
+        "SELECT * FROM clients ORDER BY name COLLATE NOCASE"
+    ).fetchall()
+    contracts = db.execute(
+        "SELECT documents.id, documents.title, clients.name AS client_name "
+        "FROM documents LEFT JOIN clients ON clients.id = documents.client_id "
+        "WHERE documents.category = 'contract' ORDER BY documents.title"
+    ).fetchall()
+
+    if request.method == "POST":
+        form = request.form
+        client_id = form.get("client_id")
+        service_date = form.get("service_date") or None
+        due_date = form.get("due_date") or None
+        description = form.get("description", "").strip()
+        contract_document_id = form.get("contract_document_id") or None
+        notes = form.get("notes", "").strip()
+
+        errors = []
+        if not client_id:
+            errors.append("Выберите клиента.")
+        if not description:
+            errors.append("Укажите описание услуги.")
+
+        if errors:
+            for e in errors:
+                flash(e, "error")
+            return render_template(
+                "invoices/edit_form.html",
+                invoice=invoice, clients=clients, contracts=contracts, form=form,
+            )
+
+        db.execute(
+            "UPDATE invoices SET client_id = ?, service_date = ?, due_date = ?, "
+            "description = ?, contract_document_id = ?, notes = ? WHERE id = ?",
+            (client_id, service_date, due_date, description, contract_document_id, notes, invoice_id),
+        )
+        db.commit()
+
+        flash("Инвойс обновлён.", "success")
+        return redirect(url_for("invoices.view_invoice", invoice_id=invoice_id))
+
+    return render_template(
+        "invoices/edit_form.html", invoice=invoice, clients=clients, contracts=contracts, form=dict(invoice)
     )
 
 
@@ -123,6 +180,11 @@ def new_invoice():
     clients = db.execute(
         "SELECT * FROM clients WHERE is_active = 1 ORDER BY name COLLATE NOCASE"
     ).fetchall()
+    contracts = db.execute(
+        "SELECT documents.id, documents.title, clients.name AS client_name "
+        "FROM documents LEFT JOIN clients ON clients.id = documents.client_id "
+        "WHERE documents.category = 'contract' ORDER BY documents.title"
+    ).fetchall()
 
     if request.method == "POST":
         form = request.form
@@ -133,6 +195,7 @@ def new_invoice():
         service_date = form.get("service_date") or None
         due_date = form.get("due_date") or None
         description = form.get("description", "").strip()
+        contract_document_id = form.get("contract_document_id") or None
         manual_rate = form.get("manual_rate", "").strip() or None
 
         errors = []
@@ -165,6 +228,7 @@ def new_invoice():
             return render_template(
                 "invoices/form.html",
                 clients=clients,
+                contracts=contracts,
                 currencies=config.SUPPORTED_CURRENCIES,
                 form=form,
                 need_manual_rate=True,
@@ -185,8 +249,8 @@ def new_invoice():
         cur = db.execute(
             "INSERT INTO invoices (invoice_number, client_id, issue_date, service_date, "
             "due_date, currency, amount, description, exchange_rate, exchange_rate_date, "
-            "exchange_rate_source, amount_rsd, status) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'issued')",
+            "exchange_rate_source, amount_rsd, contract_document_id, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'issued')",
             (
                 invoice_number,
                 client_id,
@@ -200,6 +264,7 @@ def new_invoice():
                 rate_info["date"],
                 rate_info["source"],
                 amount_rsd,
+                contract_document_id,
             ),
         )
         invoice_id = cur.lastrowid
@@ -243,6 +308,7 @@ def new_invoice():
     return render_template(
         "invoices/form.html",
         clients=clients,
+        contracts=contracts,
         currencies=config.SUPPORTED_CURRENCIES,
         form={},
         need_manual_rate=False,
@@ -254,6 +320,11 @@ def import_invoice():
     db = get_db()
     clients = db.execute(
         "SELECT * FROM clients WHERE is_active = 1 ORDER BY name COLLATE NOCASE"
+    ).fetchall()
+    contracts = db.execute(
+        "SELECT documents.id, documents.title, clients.name AS client_name "
+        "FROM documents LEFT JOIN clients ON clients.id = documents.client_id "
+        "WHERE documents.category = 'contract' ORDER BY documents.title"
     ).fetchall()
 
     if request.method == "POST":
@@ -267,6 +338,7 @@ def import_invoice():
         due_date = form.get("due_date") or None
         description = form.get("description", "").strip()
         status = form.get("status", "issued")
+        contract_document_id = form.get("contract_document_id") or None
         manual_rate = form.get("manual_rate", "").strip() or None
         file = request.files.get("file")
 
@@ -310,6 +382,7 @@ def import_invoice():
             return render_template(
                 "invoices/import_form.html",
                 clients=clients,
+                contracts=contracts,
                 currencies=config.SUPPORTED_CURRENCIES,
                 form=form,
                 need_manual_rate=True,
@@ -328,12 +401,12 @@ def import_invoice():
         cur = db.execute(
             "INSERT INTO invoices (invoice_number, client_id, issue_date, service_date, "
             "due_date, currency, amount, description, exchange_rate, exchange_rate_date, "
-            "exchange_rate_source, amount_rsd, status) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "exchange_rate_source, amount_rsd, contract_document_id, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 invoice_number, client_id, issue_date, service_date, due_date,
                 currency, amount, description, rate_info["rate"], rate_info["date"],
-                rate_info["source"], amount_rsd, status,
+                rate_info["source"], amount_rsd, contract_document_id, status,
             ),
         )
         invoice_id = cur.lastrowid
@@ -381,6 +454,7 @@ def import_invoice():
     return render_template(
         "invoices/import_form.html",
         clients=clients,
+        contracts=contracts,
         currencies=config.SUPPORTED_CURRENCIES,
         form={},
         need_manual_rate=False,
