@@ -179,8 +179,8 @@ def new_invoice():
 
         amount_rsd = round(amount * rate_info["rate"], 2)
         year = int(issue_date[:4])
-        fmt = settings_store.get("invoice_number_format", "{seq}/{year}")
-        invoice_number = invoice_numbering.next_number(db, year, fmt)
+        fmt = settings_store.get("invoice_number_format")
+        invoice_number = invoice_numbering.next_number(db, issue_date, fmt)
 
         cur = db.execute(
             "INSERT INTO invoices (invoice_number, client_id, issue_date, service_date, "

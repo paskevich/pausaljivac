@@ -8,7 +8,7 @@ DEFAULTS = {
     "maticni_broj": "",
     "bank_name": "",
     "bank_iban": "",
-    "invoice_number_format": "{seq}/{year}",
+    "invoice_number_format": "{seq}-{year}-{month}",
     "no_vat_clause": "VAT is not charged in accordance with Article 33 of the VAT Law of the Republic of Serbia.",
     "tax_due_day": "15",
 }

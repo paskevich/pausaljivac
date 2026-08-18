@@ -1,4 +1,6 @@
-def next_number(db, year, fmt):
+def next_number(db, issue_date, fmt):
+    year, month, day = (int(part) for part in issue_date.split("-"))
+
     row = db.execute(
         "SELECT next_seq FROM invoice_sequences WHERE year = ?", (year,)
     ).fetchone()
@@ -13,4 +15,4 @@ def next_number(db, year, fmt):
             "UPDATE invoice_sequences SET next_seq = next_seq + 1 WHERE year = ?",
             (year,),
         )
-    return fmt.format(seq=seq, year=year)
+    return fmt.format(seq=seq, year=year, month=month, day=day)

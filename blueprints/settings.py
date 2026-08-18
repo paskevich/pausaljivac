@@ -12,7 +12,11 @@ FIELDS = [
     ("maticni_broj", "Матичный номер"),
     ("bank_name", "Банк"),
     ("bank_iban", "IBAN"),
-    ("invoice_number_format", "Формат номера инвойса (доступно: {seq}, {year})"),
+    (
+        "invoice_number_format",
+        "Формат номера инвойса (доступно: {seq}, {year}, {month}, {day}; "
+        "для дополнения нулями — {month:02d}, {day:02d}, {seq:03d})",
+    ),
     ("no_vat_clause", "Оговорка об отсутствии НДС в счёте"),
     ("tax_due_day", "День уплаты налога/взносов (число месяца)"),
 ]
