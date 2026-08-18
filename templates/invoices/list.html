@@ -16,8 +16,8 @@
       <td><a href="{{ url_for('invoices.view_invoice', invoice_id=inv['id']) }}">{{ inv['invoice_number'] }}</a></td>
       <td>{{ inv['client_name'] }}</td>
       <td>{{ inv['issue_date'] }}</td>
-      <td>{{ '%.2f'|format(inv['amount']) }} {{ inv['currency'] }}</td>
-      <td>{{ '%.2f'|format(inv['amount_rsd']) if inv['amount_rsd'] is not none else '—' }}</td>
+      <td>{{ inv['amount']|money }} {{ inv['currency'] }}</td>
+      <td>{{ inv['amount_rsd']|money if inv['amount_rsd'] is not none else '—' }}</td>
       <td><span class="badge badge-{{ inv['status'] }}">{{ status_labels[inv['status']] }}</span></td>
       <td>
         <a class="btn-secondary" href="{{ url_for('invoices.confirm_delete_invoice', invoice_id=inv['id']) }}">Удалить</a>

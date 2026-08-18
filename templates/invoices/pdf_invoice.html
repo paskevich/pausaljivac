@@ -55,14 +55,14 @@
     <tbody>
       <tr>
         <td>{{ invoice.description }}</td>
-        <td>{{ "%.2f"|format(invoice.amount) }} {{ invoice.currency }}</td>
+        <td>{{ invoice.amount|money }} {{ invoice.currency }}</td>
       </tr>
     </tbody>
   </table>
 
   <div class="totals">
-    <strong>Total: {{ "%.2f"|format(invoice.amount) }} {{ invoice.currency }}</strong>
-    <div class="muted">(approx. {{ "%.2f"|format(invoice.amount_rsd) }} RSD at NBS middle exchange rate)</div>
+    <strong>Total: {{ invoice.amount|money }} {{ invoice.currency }}</strong>
+    <div class="muted">(approx. {{ invoice.amount_rsd|money }} RSD at NBS middle exchange rate)</div>
   </div>
 
   <p class="no-vat">{{ settings.no_vat_clause }}</p>

@@ -12,7 +12,7 @@
     <tr>
       <td>{{ p['period_month'] }}.{{ p['period_year'] }}</td>
       <td>{{ p['due_date'] }}</td>
-      <td>{{ '%.2f'|format(p['amount_due']) }}</td>
+      <td>{{ p['amount_due']|money }}</td>
       <td>
         {% if p['status'] == 'paid' %}
         <span class="badge badge-paid">Оплачен</span>

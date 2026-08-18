@@ -9,8 +9,8 @@
   <p><strong>Дата выставления:</strong> {{ invoice['issue_date'] }}</p>
   <p><strong>Дата услуги:</strong> {{ invoice['service_date'] or '—' }}</p>
   <p><strong>Срок оплаты:</strong> {{ invoice['due_date'] or '—' }}</p>
-  <p><strong>Сумма:</strong> {{ '%.2f'|format(invoice['amount']) }} {{ invoice['currency'] }}</p>
-  <p><strong>Сумма в RSD:</strong> {{ '%.2f'|format(invoice['amount_rsd']) if invoice['amount_rsd'] is not none else '—' }}
+  <p><strong>Сумма:</strong> {{ invoice['amount']|money }} {{ invoice['currency'] }}</p>
+  <p><strong>Сумма в RSD:</strong> {{ invoice['amount_rsd']|money if invoice['amount_rsd'] is not none else '—' }}
      (курс {{ invoice['exchange_rate'] }} на {{ invoice['exchange_rate_date'] }}, источник: {{ invoice['exchange_rate_source'] }})</p>
   <p><strong>Описание:</strong> {{ invoice['description'] }}</p>
 </div>

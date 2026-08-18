@@ -5,7 +5,7 @@
 <div class="card">
   <p><strong>Клиент:</strong> {{ invoice['client_name'] }}</p>
   <p><strong>Дата выставления:</strong> {{ invoice['issue_date'] }}</p>
-  <p><strong>Сумма:</strong> {{ '%.2f'|format(invoice['amount']) }} {{ invoice['currency'] }}</p>
+  <p><strong>Сумма:</strong> {{ invoice['amount']|money }} {{ invoice['currency'] }}</p>
   <p class="hint">
     PDF будет безвозвратно удалён, запись — из базы данных. Номер счёта повторно не используется.
     Это отличается от «Отменить» на странице инвойса — та кнопка просто исключает счёт из лимитов, сохраняя запись для истории.

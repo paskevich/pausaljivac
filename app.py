@@ -24,6 +24,12 @@ def create_app():
     app.register_blueprint(tax_bp)
     app.register_blueprint(settings_bp)
 
+    @app.template_filter("money")
+    def format_money(value, decimals=2):
+        if value is None:
+            return "—"
+        return f"{value:,.{decimals}f}"
+
     return app
 
 
