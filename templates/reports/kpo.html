@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 2cm; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 10pt; color: #111; }
+  h1 { font-size: 13pt; text-align: center; margin-bottom: 0.2em; }
+  h2 { font-size: 11pt; text-align: center; margin-top: 0; margin-bottom: 1.5em; font-weight: normal; }
+  .header-block { margin-bottom: 1.5em; }
+  .header-block p { margin: 0.2em 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #333; padding: 0.4em 0.5em; text-align: left; vertical-align: top; }
+  th { background: #f0f0f0; font-size: 9pt; }
+  td.num { text-align: right; white-space: nowrap; }
+  th.num { text-align: center; }
+  tr.total td { font-weight: bold; border-top: 2px solid #111; }
+  .col-rb { width: 6%; text-align: center; }
+  .col-opis { width: 48%; }
+  .col-amt { width: 15%; }
+</style>
+</head>
+<body>
+  <h1>KNJIGA O OSTVARENOM PROMETU PAUŠALNO OPOREZOVANIH OBVEZNIKA</h1>
+  <h2>(Obrazac KPO) — za {{ year }}. godinu</h2>
+
+  <div class="header-block">
+    <p><strong>{{ settings.business_name }}</strong></p>
+    <p>{{ settings.owner_full_name }}</p>
+    <p>{{ settings.address }}</p>
+    <p>PIB: {{ settings.pib }} &nbsp;|&nbsp; Matični broj: {{ settings.maticni_broj }}</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-rb">Redni broj</th>
+        <th class="col-opis">Datum i opis knjiženja</th>
+        <th class="col-amt num">Prihod od prodaje proizvoda</th>
+        <th class="col-amt num">Prihod od izvršenih usluga</th>
+        <th class="col-amt num">Ukupan prihod od delatnosti</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="col-rb">{{ r.redni_broj }}</td>
+        <td>{{ r.opis }}</td>
+        <td class="num">—</td>
+        <td class="num">{{ r.usluge|money }}</td>
+        <td class="num">{{ r.usluge|money }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Nema prometa za {{ year }}. godinu.</td></tr>
+      {% endfor %}
+      <tr class="total">
+        <td colspan="2">UKUPNO za {{ year }}. godinu</td>
+        <td class="num">—</td>
+        <td class="num">{{ total|money }}</td>
+        <td class="num">{{ total|money }}</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

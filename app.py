@@ -9,6 +9,7 @@ from blueprints.documents import bp as documents_bp
 from blueprints.tax import bp as tax_bp
 from blueprints.settings import bp as settings_bp
 from blueprints.inflow_form import bp as inflow_form_bp
+from blueprints.reports import bp as reports_bp
 
 
 def create_app():
@@ -25,6 +26,7 @@ def create_app():
     app.register_blueprint(tax_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(inflow_form_bp)
+    app.register_blueprint(reports_bp)
 
     @app.template_filter("money")
     def format_money(value, decimals=2):

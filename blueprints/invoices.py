@@ -36,8 +36,15 @@ def list_invoices():
         "JOIN clients ON clients.id = invoices.client_id "
         "ORDER BY invoices.issue_date DESC, invoices.id DESC"
     ).fetchall()
+    kpo_years = [
+        row["yr"] for row in db.execute(
+            "SELECT DISTINCT strftime('%Y', issue_date) AS yr FROM invoices "
+            "WHERE status != 'cancelled' ORDER BY yr DESC"
+        ).fetchall()
+    ]
     return render_template(
-        "invoices/list.html", invoices=invoices, status_labels=STATUS_LABELS
+        "invoices/list.html", invoices=invoices, status_labels=STATUS_LABELS,
+        kpo_years=kpo_years,
     )
 
 

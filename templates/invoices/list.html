@@ -6,6 +6,14 @@
   <a class="btn" href="{{ url_for('invoices.new_invoice') }}">+ Новый инвойс</a>
   <a class="btn btn-secondary" href="{{ url_for('invoices.import_invoice') }}">Импортировать старый инвойс</a>
 </p>
+{% if kpo_years %}
+<p class="hint">
+  KPO knjiga:
+  {% for y in kpo_years %}
+  <a href="{{ url_for('reports.kpo', year=y) }}" target="_blank">{{ y }}</a>{% if not loop.last %} · {% endif %}
+  {% endfor %}
+</p>
+{% endif %}
 <table>
   <thead>
     <tr><th>№</th><th>Клиент</th><th>Дата</th><th>Сумма</th><th>RSD</th><th>Статус</th><th></th></tr>
