@@ -5,11 +5,13 @@
 <p class="hint">
   {{ category_labels[doc['category']] }}
   {% if doc['client_name'] %} · {{ doc['client_name'] }}{% endif %}
+  {% if doc['resenje_number'] %} · решение <a href="{{ url_for('tax.edit_resenje', resenje_id=doc['resenje_id']) }}">{{ doc['resenje_number'] }}</a>{% endif %}
   {% if doc['period_year'] %} · {{ doc['period_month'] or '' }} {{ doc['period_year'] }}{% endif %}
   · {{ doc['uploaded_at'] }}
 </p>
 <p>
   <a class="btn" href="{{ url_for('documents.download_document', document_id=doc['id']) }}">Скачать</a>
+  <a class="btn btn-secondary" href="{{ url_for('documents.edit_document', document_id=doc['id']) }}">Редактировать</a>
   <a class="btn btn-secondary" href="{{ url_for('documents.list_documents') }}">← К списку документов</a>
   <a class="btn btn-secondary" href="{{ url_for('documents.confirm_delete_document', document_id=doc['id']) }}">Удалить</a>
 </p>

@@ -24,6 +24,14 @@
     {% endfor %}
   </select>
 
+  <label for="resenje_id">Решение налоговой</label>
+  <select id="resenje_id" name="resenje_id">
+    <option value="">—</option>
+    {% for r in resenja %}
+    <option value="{{ r['id'] }}" {% if r['id'] == preselected_resenje_id %}selected{% endif %}>{{ r['resenje_number'] or 'Без номера' }} ({{ r['valid_from'] }})</option>
+    {% endfor %}
+  </select>
+
   <label for="period_year">Год периода</label>
   <input id="period_year" name="period_year" placeholder="напр. 2026">
 

@@ -34,12 +34,15 @@ def list_documents():
     client_id = request.args.get("client_id", "")
     tag = request.args.get("tag", "")
     year = request.args.get("year", "")
+    resenje_id = request.args.get("resenje_id", "")
 
     query = (
         "SELECT documents.*, clients.name AS client_name, "
+        "tax_resenja.resenje_number AS resenje_number, "
         "GROUP_CONCAT(tags.name) AS tag_names "
         "FROM documents "
         "LEFT JOIN clients ON clients.id = documents.client_id "
+        "LEFT JOIN tax_resenja ON tax_resenja.id = documents.resenje_id "
         "LEFT JOIN document_tags ON document_tags.document_id = documents.id "
         "LEFT JOIN tags ON tags.id = document_tags.tag_id "
         "WHERE 1=1"
@@ -55,6 +58,9 @@ def list_documents():
     if year:
         query += " AND documents.period_year = ?"
         params.append(year)
+    if resenje_id:
+        query += " AND documents.resenje_id = ?"
+        params.append(resenje_id)
     if tag:
         query += (
             " AND documents.id IN (SELECT document_id FROM document_tags "
@@ -67,15 +73,20 @@ def list_documents():
     documents = db.execute(query, params).fetchall()
     clients = db.execute("SELECT * FROM clients ORDER BY name COLLATE NOCASE").fetchall()
     all_tags = db.execute("SELECT name FROM tags ORDER BY name").fetchall()
+    resenja = db.execute("SELECT id, resenje_number, valid_from FROM tax_resenja ORDER BY valid_from DESC").fetchall()
 
     return render_template(
         "documents/list.html",
         documents=documents,
         clients=clients,
         all_tags=all_tags,
+        resenja=resenja,
         categories=config.DOCUMENT_CATEGORIES,
         category_labels=CATEGORY_LABELS,
-        filters={"category": category, "client_id": client_id, "tag": tag, "year": year},
+        filters={
+            "category": category, "client_id": client_id, "tag": tag,
+            "year": year, "resenje_id": resenje_id,
+        },
     )
 
 
@@ -87,6 +98,7 @@ def upload_document():
         category = request.form.get("category", "other")
         title = request.form.get("title", "").strip()
         client_id = request.form.get("client_id") or None
+        resenje_id = request.form.get("resenje_id") or None
         period_year = request.form.get("period_year") or None
         period_month = request.form.get("period_month") or None
         tags_raw = request.form.get("tags", "")
@@ -101,8 +113,8 @@ def upload_document():
             return redirect(url_for("documents.upload_document"))
 
         document_id = save_uploaded_file(
-            db, file, category, client_id=client_id, period_year=period_year,
-            period_month=period_month, title=title, notes=notes,
+            db, file, category, client_id=client_id, resenje_id=resenje_id,
+            period_year=period_year, period_month=period_month, title=title, notes=notes,
         )
         _attach_tags(db, document_id, tags_raw)
         db.commit()
@@ -111,11 +123,76 @@ def upload_document():
         return redirect(url_for("documents.list_documents"))
 
     clients = db.execute("SELECT * FROM clients ORDER BY name COLLATE NOCASE").fetchall()
+    resenja = db.execute("SELECT id, resenje_number, valid_from FROM tax_resenja ORDER BY valid_from DESC").fetchall()
     return render_template(
         "documents/upload_form.html",
         clients=clients,
+        resenja=resenja,
+        preselected_resenje_id=request.args.get("resenje_id", type=int),
         categories=[c for c in config.DOCUMENT_CATEGORIES if c != "invoice"],
         category_labels=CATEGORY_LABELS,
+    )
+
+
+@bp.route("/<int:document_id>/edit", methods=["GET", "POST"])
+def edit_document(document_id):
+    db = get_db()
+    doc = db.execute("SELECT * FROM documents WHERE id = ?", (document_id,)).fetchone()
+    if doc is None:
+        abort(404)
+
+    is_invoice_doc = doc["category"] == "invoice"
+
+    if request.method == "POST":
+        category = doc["category"] if is_invoice_doc else request.form.get("category", "other")
+        title = request.form.get("title", "").strip()
+        client_id = request.form.get("client_id") or None
+        resenje_id = request.form.get("resenje_id") or None
+        period_year = request.form.get("period_year") or None
+        period_month = request.form.get("period_month") or None
+        tags_raw = request.form.get("tags", "")
+        notes = request.form.get("notes", "").strip()
+
+        if not is_invoice_doc and (
+            category not in config.DOCUMENT_CATEGORIES or category == "invoice"
+        ):
+            flash("Недопустимая категория документа.", "error")
+            return redirect(url_for("documents.edit_document", document_id=document_id))
+
+        if not title:
+            title = doc["original_filename"] or doc["title"]
+
+        db.execute(
+            "UPDATE documents SET category = ?, title = ?, client_id = ?, resenje_id = ?, "
+            "period_year = ?, period_month = ?, notes = ? WHERE id = ?",
+            (category, title, client_id, resenje_id, period_year, period_month, notes, document_id),
+        )
+        db.execute("DELETE FROM document_tags WHERE document_id = ?", (document_id,))
+        _attach_tags(db, document_id, tags_raw)
+        db.commit()
+
+        flash("Документ обновлён.", "success")
+        return redirect(url_for("documents.view_document", document_id=document_id))
+
+    clients = db.execute("SELECT * FROM clients ORDER BY name COLLATE NOCASE").fetchall()
+    resenja = db.execute("SELECT id, resenje_number, valid_from FROM tax_resenja ORDER BY valid_from DESC").fetchall()
+    current_tags = db.execute(
+        "SELECT tags.name FROM tags "
+        "JOIN document_tags ON document_tags.tag_id = tags.id "
+        "WHERE document_tags.document_id = ? ORDER BY tags.name",
+        (document_id,),
+    ).fetchall()
+    tags_value = ", ".join(t["name"] for t in current_tags)
+
+    return render_template(
+        "documents/edit_form.html",
+        doc=doc,
+        clients=clients,
+        resenja=resenja,
+        categories=[c for c in config.DOCUMENT_CATEGORIES if c != "invoice"],
+        category_labels=CATEGORY_LABELS,
+        is_invoice_doc=is_invoice_doc,
+        tags_value=tags_value,
     )
 
 
@@ -161,17 +238,6 @@ def delete_document(document_id):
         )
         flash("PDF также откреплён от соответствующего инвойса.", "warning")
 
-    linked_resenja = db.execute(
-        "SELECT resenje_number FROM tax_resenja WHERE document_id = ?", (document_id,)
-    ).fetchall()
-    if linked_resenja:
-        db.execute(
-            "UPDATE tax_resenja SET document_id = NULL WHERE document_id = ?",
-            (document_id,),
-        )
-        names = ", ".join(r["resenje_number"] or "без номера" for r in linked_resenja)
-        flash(f"Документ также откреплён от решения(й): {names}.", "warning")
-
     db.execute("DELETE FROM documents WHERE id = ?", (document_id,))
     db.commit()
 
@@ -191,8 +257,10 @@ PREVIEWABLE_INLINE_TYPES = PREVIEWABLE_IMAGE_TYPES | {"application/pdf", "text/p
 def view_document(document_id):
     db = get_db()
     doc = db.execute(
-        "SELECT documents.*, clients.name AS client_name FROM documents "
+        "SELECT documents.*, clients.name AS client_name, "
+        "tax_resenja.resenje_number AS resenje_number FROM documents "
         "LEFT JOIN clients ON clients.id = documents.client_id "
+        "LEFT JOIN tax_resenja ON tax_resenja.id = documents.resenje_id "
         "WHERE documents.id = ?",
         (document_id,),
     ).fetchone()
@@ -221,7 +289,7 @@ def raw_document(document_id):
     return send_from_directory(config.DOCUMENTS_DIR, doc["file_path"], as_attachment=False)
 
 
-def save_uploaded_file(db, file, category, client_id=None, period_year=None,
+def save_uploaded_file(db, file, category, client_id=None, resenje_id=None, period_year=None,
                         period_month=None, title=None, notes=""):
     original_filename = file.filename
     if not title:
@@ -236,11 +304,11 @@ def save_uploaded_file(db, file, category, client_id=None, period_year=None,
     relative_path = f"{category}/{stored_name}"
 
     cur = db.execute(
-        "INSERT INTO documents (category, client_id, period_year, period_month, "
+        "INSERT INTO documents (category, client_id, resenje_id, period_year, period_month, "
         "title, file_path, original_filename, mime_type, notes) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
-            category, client_id, period_year, period_month, title,
+            category, client_id, resenje_id, period_year, period_month, title,
             relative_path, original_filename, file.mimetype, notes,
         ),
     )

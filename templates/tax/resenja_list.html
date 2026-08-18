@@ -8,7 +8,7 @@
 </p>
 <table>
   <thead>
-    <tr><th>№</th><th>Действует с</th><th>По</th><th>Паушальный налог</th><th>PIO</th><th>Здоровье</th><th>Безработица</th><th>Документ</th></tr>
+    <tr><th>№</th><th>Действует с</th><th>По</th><th>Паушальный налог</th><th>PIO</th><th>Здоровье</th><th>Безработица</th><th>Документ</th><th></th></tr>
   </thead>
   <tbody>
     {% for r in resenja %}
@@ -16,18 +16,23 @@
       <td>{{ r['resenje_number'] or '—' }}</td>
       <td>{{ r['valid_from'] }}</td>
       <td>{{ r['valid_to'] or '—' }}</td>
-      <td>{{ '%.2f'|format(r['pausal_tax_amount']) }}</td>
-      <td>{{ '%.2f'|format(r['pio_contribution']) }}</td>
-      <td>{{ '%.2f'|format(r['health_contribution']) }}</td>
-      <td>{{ '%.2f'|format(r['unemployment_contribution']) }}</td>
+      <td>{{ r['pausal_tax_amount']|money }}</td>
+      <td>{{ r['pio_contribution']|money }}</td>
+      <td>{{ r['health_contribution']|money }}</td>
+      <td>{{ r['unemployment_contribution']|money }}</td>
       <td>
-        {% if r['doc_id'] %}
-        <a href="{{ url_for('documents.view_document', document_id=r['doc_id']) }}">Просмотр</a>
+        {% set docs = documents_by_resenje[r['id']] %}
+        {% if docs %}
+        {% for d in docs %}<a href="{{ url_for('documents.view_document', document_id=d['id']) }}">{{ d['title'] }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
         {% else %}—{% endif %}
+      </td>
+      <td>
+        <a class="btn btn-secondary" href="{{ url_for('tax.edit_resenje', resenje_id=r['id']) }}">Изменить</a>
+        <a class="btn btn-secondary" href="{{ url_for('tax.confirm_delete_resenje', resenje_id=r['id']) }}">Удалить</a>
       </td>
     </tr>
     {% else %}
-    <tr><td colspan="8">Решений пока нет.</td></tr>
+    <tr><td colspan="9">Решений пока нет.</td></tr>
     {% endfor %}
   </tbody>
 </table>

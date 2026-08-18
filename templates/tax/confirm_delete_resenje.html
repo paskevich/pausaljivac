@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Удалить решение — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Удалить решение налоговой?</h1>
+<div class="card">
+  <p><strong>{{ resenje['resenje_number'] or 'Без номера' }}</strong> ({{ resenje['valid_from'] }}{% if resenje['valid_to'] %} — {{ resenje['valid_to'] }}{% endif %})</p>
+  <p class="hint">Запись будет безвозвратно удалена из базы данных. Отменить это действие нельзя.</p>
+  {% if linked_documents_count %}
+  <p class="hint">⚠ С этим решением связано {{ linked_documents_count }} документ(ов) — они не будут удалены, только откреплены от этого решения.</p>
+  {% endif %}
+  {% if linked_payments_count %}
+  <p class="hint">⚠ С этим решением связано {{ linked_payments_count }} платеж(ей) — они останутся в системе, но без ссылки на решение.</p>
+  {% endif %}
+</div>
+<form method="post" action="{{ url_for('tax.delete_resenje', resenje_id=resenje['id']) }}">
+  <button type="submit">Да, удалить безвозвратно</button>
+  <a class="btn btn-secondary" href="{{ url_for('tax.list_resenja') }}">Отмена</a>
+</form>
+{% endblock %}

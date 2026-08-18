@@ -1,38 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Новое решение — Paušal 3000{% endblock %}
+{% block title %}{{ 'Изменить решение' if resenje else 'Новое решение' }} — Paušal 3000{% endblock %}
 {% block content %}
-<h1>Новое решение налоговой</h1>
-<form class="stacked-form" method="post" enctype="multipart/form-data">
+<h1>{{ 'Изменить решение налоговой' if resenje else 'Новое решение налоговой' }}</h1>
+<form class="stacked-form" method="post">
   <label for="resenje_number">Номер решения</label>
-  <input id="resenje_number" name="resenje_number">
+  <input id="resenje_number" name="resenje_number" value="{{ resenje['resenje_number'] if resenje else '' }}">
 
   <label for="valid_from">Действует с *</label>
-  <input id="valid_from" name="valid_from" type="date" required>
+  <input id="valid_from" name="valid_from" type="date" required value="{{ resenje['valid_from'] if resenje else '' }}">
 
   <label for="valid_to">Действует по (если известно)</label>
-  <input id="valid_to" name="valid_to" type="date">
+  <input id="valid_to" name="valid_to" type="date" value="{{ resenje['valid_to'] if resenje else '' }}">
+  {% if resenje %}
+  <p class="hint">Например, при заморозке фирмы укажите здесь дату прекращения деятельности — платежи после этой даты формироваться не будут, а уже созданные неоплаченные платежи вне нового периода будут удалены.</p>
+  {% endif %}
 
   <label for="pausal_tax_amount">Паушальный налог, RSD/мес *</label>
-  <input id="pausal_tax_amount" name="pausal_tax_amount" type="number" step="0.01" required>
+  <input id="pausal_tax_amount" name="pausal_tax_amount" type="number" step="0.01" required value="{{ resenje['pausal_tax_amount'] if resenje else '' }}">
 
   <label for="pio_contribution">Взнос ПИО (пенсия), RSD/мес *</label>
-  <input id="pio_contribution" name="pio_contribution" type="number" step="0.01" required>
+  <input id="pio_contribution" name="pio_contribution" type="number" step="0.01" required value="{{ resenje['pio_contribution'] if resenje else '' }}">
 
   <label for="health_contribution">Взнос на здравоохранение, RSD/мес *</label>
-  <input id="health_contribution" name="health_contribution" type="number" step="0.01" required>
+  <input id="health_contribution" name="health_contribution" type="number" step="0.01" required value="{{ resenje['health_contribution'] if resenje else '' }}">
 
   <label for="unemployment_contribution">Взнос на случай безработицы, RSD/мес</label>
-  <input id="unemployment_contribution" name="unemployment_contribution" type="number" step="0.01" value="0">
-
-  <label for="file">Файл решения / QR для оплаты</label>
-  <input id="file" name="file" type="file">
+  <input id="unemployment_contribution" name="unemployment_contribution" type="number" step="0.01" value="{{ resenje['unemployment_contribution'] if resenje else 0 }}">
 
   <label for="notes">Заметки</label>
-  <textarea id="notes" name="notes" rows="2"></textarea>
+  <textarea id="notes" name="notes" rows="2">{{ resenje['notes'] if resenje else '' }}</textarea>
 
   <div class="actions">
     <button type="submit">Сохранить</button>
     <a class="btn btn-secondary" href="{{ url_for('tax.list_resenja') }}">Отмена</a>
   </div>
 </form>
+
+{% if resenje %}
+<div class="card">
+  <p class="hint">Файлы решения (скан, QR для оплаты и т.п.) прикрепляются через раздел «Документы» — решение может состоять из нескольких файлов.</p>
+  <a class="btn btn-secondary" href="{{ url_for('documents.upload_document') }}?resenje_id={{ resenje['id'] }}">+ Прикрепить документ</a>
+  <a class="btn btn-secondary" href="{{ url_for('documents.list_documents', resenje_id=resenje['id']) }}">Все документы решения</a>
+</div>
+{% endif %}
 {% endblock %}

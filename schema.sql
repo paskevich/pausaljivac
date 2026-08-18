@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS documents (
     category           TEXT NOT NULL CHECK(category IN ('resenje','contract','other','invoice','bank_report')),
     client_id          INTEGER REFERENCES clients(id),
     invoice_id         INTEGER REFERENCES invoices(id),
+    resenje_id         INTEGER REFERENCES tax_resenja(id),
     period_year        INTEGER,
     period_month       INTEGER,
     title              TEXT NOT NULL,
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category);
 CREATE INDEX IF NOT EXISTS idx_documents_client ON documents(client_id);
 CREATE INDEX IF NOT EXISTS idx_documents_period ON documents(period_year, period_month);
+CREATE INDEX IF NOT EXISTS idx_documents_resenje ON documents(resenje_id);
 
 CREATE TABLE IF NOT EXISTS document_tags (
     document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
@@ -91,7 +93,6 @@ CREATE TABLE IF NOT EXISTS tax_resenja (
     pio_contribution            NUMERIC NOT NULL,
     health_contribution         NUMERIC NOT NULL,
     unemployment_contribution   NUMERIC NOT NULL DEFAULT 0,
-    document_id                 INTEGER REFERENCES documents(id),
     notes                       TEXT,
     created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

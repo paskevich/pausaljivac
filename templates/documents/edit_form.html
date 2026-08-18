@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Редактировать документ — Paušal 3000{% endblock %}
+{% block content %}
+<h1>Редактировать документ</h1>
+<form class="stacked-form" method="post">
+  <label for="category">Категория *</label>
+  {% if is_invoice_doc %}
+  <input value="{{ category_labels['invoice'] }}" disabled>
+  <p class="hint">Категория инвойса не меняется — она привязана к самому инвойсу.</p>
+  {% else %}
+  <select id="category" name="category" required>
+    {% for c in categories %}
+    <option value="{{ c }}" {% if c == doc['category'] %}selected{% endif %}>{{ category_labels[c] }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+
+  <label for="title">Название</label>
+  <input id="title" name="title" value="{{ doc['title'] }}">
+
+  <label for="client_id">Клиент</label>
+  <select id="client_id" name="client_id">
+    <option value="">—</option>
+    {% for c in clients %}
+    <option value="{{ c['id'] }}" {% if c['id'] == doc['client_id'] %}selected{% endif %}>{{ c['name'] }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="resenje_id">Решение налоговой</label>
+  <select id="resenje_id" name="resenje_id">
+    <option value="">—</option>
+    {% for r in resenja %}
+    <option value="{{ r['id'] }}" {% if r['id'] == doc['resenje_id'] %}selected{% endif %}>{{ r['resenje_number'] or 'Без номера' }} ({{ r['valid_from'] }})</option>
+    {% endfor %}
+  </select>
+
+  <label for="period_year">Год периода</label>
+  <input id="period_year" name="period_year" value="{{ doc['period_year'] or '' }}" placeholder="напр. 2026">
+
+  <label for="period_month">Месяц периода</label>
+  <input id="period_month" name="period_month" value="{{ doc['period_month'] or '' }}" placeholder="1-12">
+
+  <label for="tags">Теги (через запятую)</label>
+  <input id="tags" name="tags" value="{{ tags_value }}" placeholder="напр. rešenje, 2026, важное">
+
+  <label for="notes">Заметки</label>
+  <textarea id="notes" name="notes" rows="3">{{ doc['notes'] or '' }}</textarea>
+
+  <div class="actions">
+    <button type="submit">Сохранить</button>
+    <a class="btn btn-secondary" href="{{ url_for('documents.view_document', document_id=doc['id']) }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

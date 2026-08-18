@@ -36,12 +36,21 @@
     <label for="year">Год</label>
     <input id="year" name="year" value="{{ filters.year }}" style="width:6rem">
   </div>
+  <div>
+    <label for="resenje_id">Решение</label>
+    <select id="resenje_id" name="resenje_id">
+      <option value="">Все</option>
+      {% for r in resenja %}
+      <option value="{{ r['id'] }}" {% if filters.resenje_id|string == r['id']|string %}selected{% endif %}>{{ r['resenje_number'] or 'Без номера' }} ({{ r['valid_from'] }})</option>
+      {% endfor %}
+    </select>
+  </div>
   <div><button type="submit">Фильтровать</button></div>
 </form>
 
 <table>
   <thead>
-    <tr><th>Название</th><th>Категория</th><th>Клиент</th><th>Период</th><th>Теги</th><th>Загружен</th><th></th></tr>
+    <tr><th>Название</th><th>Категория</th><th>Клиент</th><th>Решение</th><th>Период</th><th>Теги</th><th>Загружен</th><th></th></tr>
   </thead>
   <tbody>
     {% for d in documents %}
@@ -49,17 +58,19 @@
       <td>{{ d['title'] }}</td>
       <td>{{ category_labels[d['category']] }}</td>
       <td>{{ d['client_name'] or '—' }}</td>
+      <td>{{ d['resenje_number'] or '—' }}</td>
       <td>{% if d['period_year'] %}{{ d['period_month'] or '' }} {{ d['period_year'] }}{% else %}—{% endif %}</td>
       <td>{% if d['tag_names'] %}{% for t in d['tag_names'].split(',') %}<span class="tag">{{ t }}</span>{% endfor %}{% else %}—{% endif %}</td>
       <td>{{ d['uploaded_at'] }}</td>
       <td>
         <a class="btn-secondary" href="{{ url_for('documents.view_document', document_id=d['id']) }}">Просмотр</a>
+        <a class="btn-secondary" href="{{ url_for('documents.edit_document', document_id=d['id']) }}">Редактировать</a>
         <a class="btn-secondary" href="{{ url_for('documents.download_document', document_id=d['id']) }}">Скачать</a>
         <a class="btn-secondary" href="{{ url_for('documents.confirm_delete_document', document_id=d['id']) }}">Удалить</a>
       </td>
     </tr>
     {% else %}
-    <tr><td colspan="7">Документов пока нет.</td></tr>
+    <tr><td colspan="8">Документов пока нет.</td></tr>
     {% endfor %}
   </tbody>
 </table>
