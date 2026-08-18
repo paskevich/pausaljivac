@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     issue_date           DATE NOT NULL,
     service_date         DATE,
     due_date              DATE,
-    currency             TEXT NOT NULL CHECK(currency IN ('EUR','USD')),
+    currency             TEXT NOT NULL CHECK(currency IN ('EUR','USD','RSD')),
     amount               NUMERIC NOT NULL,
     description           TEXT NOT NULL,
     exchange_rate         NUMERIC,

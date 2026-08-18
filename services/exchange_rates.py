@@ -10,6 +10,9 @@ def get_rate(db, currency, date_str, manual_rate=None):
     by default, see config.ENABLE_NBS_AUTO_FETCH) > nearest earlier cached date.
     Returns a dict with rate/date/source/fallback, or None if nothing is available.
     """
+    if currency == "RSD":
+        return {"rate": 1.0, "date": date_str, "source": "same_currency", "fallback": False}
+
     if manual_rate:
         rate = float(manual_rate)
         _save_rate(db, date_str, currency, rate, "manual")
