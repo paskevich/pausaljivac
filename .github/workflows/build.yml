@@ -36,6 +36,7 @@ jobs:
           Copy-Item "C:\Program Files\GTK3-Runtime Win64\bin\*.dll" -Destination "dist\Pausaljivac\" -Force
 
       - name: Smoke-test the built exe (starts it, hits the dashboard and a WeasyPrint PDF endpoint)
+        timeout-minutes: 3
         shell: pwsh
         run: |
           $proc = Start-Process -FilePath "dist\Pausaljivac\Pausaljivac.exe" -PassThru
@@ -133,6 +134,18 @@ jobs:
           echo "--- final libs directory ---"
           ls -la "$LIBDIR"
 
+          # install_name_tool (used internally by dylibbundler) invalidates
+          # whatever ad-hoc signature PyInstaller's linker originally applied.
+          # On Apple Silicon, launching a binary with a broken signature can
+          # hang (AMFI/Gatekeeper validation) rather than failing fast, so
+          # every binary it touched needs a fresh ad-hoc signature.
+          echo "--- re-signing modified binaries ---"
+          for lib in "$LIBDIR"/*.dylib; do
+            [ -e "$lib" ] || continue
+            codesign --force -s - "$lib"
+          done
+          codesign --force -s - "$BIN"
+
       - name: Wrap the launcher to point WeasyPrint's native loader at the bundled libs
         run: |
           set -e
@@ -147,28 +160,40 @@ jobs:
           } > "$MACOS_DIR/Pausaljivac"
           chmod +x "$MACOS_DIR/Pausaljivac"
 
+          # Re-sign the whole bundle ad-hoc now that its contents changed.
+          codesign --force --deep -s - "$APP"
+
       - name: Smoke-test the built app (starts it, hits the dashboard and a WeasyPrint PDF endpoint)
+        timeout-minutes: 3
         run: |
           set -e
-          "dist/Pausaljivac.app/Contents/MacOS/Pausaljivac" &
+          "dist/Pausaljivac.app/Contents/MacOS/Pausaljivac" > app.log 2>&1 &
           APP_PID=$!
           ok=0
           for i in $(seq 1 30); do
             sleep 2
-            if curl -sf -o /dev/null "http://127.0.0.1:5000/"; then
+            if curl -sf -m 3 -o /dev/null "http://127.0.0.1:5000/"; then
               ok=1
+              break
+            fi
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              echo "App process exited early"
               break
             fi
           done
           if [ "$ok" -ne 1 ]; then
+            echo "=== app.log ==="
+            cat app.log || true
             kill "$APP_PID" 2>/dev/null || true
             echo "App did not respond on http://127.0.0.1:5000/ within 60s"
             exit 1
           fi
-          content_type=$(curl -sf -D - -o /dev/null "http://127.0.0.1:5000/reports/kpo?year=2026" | grep -i '^content-type:' || true)
+          content_type=$(curl -sf -m 15 -D - -o /dev/null "http://127.0.0.1:5000/reports/kpo?year=2026" | grep -i '^content-type:' || true)
           echo "KPO endpoint content-type: $content_type"
           kill "$APP_PID" 2>/dev/null || true
           if ! echo "$content_type" | grep -qi pdf; then
+            echo "=== app.log ==="
+            cat app.log || true
             echo "KPO PDF endpoint did not return a PDF — WeasyPrint/dylib bundling is likely broken"
             exit 1
           fi
