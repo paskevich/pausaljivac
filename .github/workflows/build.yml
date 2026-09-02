@@ -88,7 +88,7 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller pausaljivac.spec
 
-      - name: Bundle Homebrew dylibs into the .app (WeasyPrint loads them at runtime via cffi, not link-time, so they won't show up as normal dependencies)
+      - name: Bundle Homebrew dylibs into the .app (WeasyPrint loads them at runtime via cffi/dlopen by an exact filename it hardcodes per platform, not at link-time, so normal dependency scanning — including dylibbundler run on the app binary itself — never finds them)
         run: |
           set -e
           APP="dist/Pausaljivac.app"
@@ -98,20 +98,40 @@ jobs:
 
           PREFIX=$(brew --prefix)
 
-          # Copy every dylib WeasyPrint's native bindings might dlopen by name,
-          # then let dylibbundler pull in their own recursive dependencies too.
-          for name in cairo pango-1.0 pangocairo-1.0 gobject-2.0 glib-2.0 gdk_pixbuf-2.0 fontconfig harfbuzz; do
-            found=$(find "$PREFIX/lib" -maxdepth 1 -name "lib${name}*.dylib" 2>/dev/null | head -n1 || true)
+          # weasyprint/text/ffi.py's _dlopen() calls list the exact macOS
+          # filename it tries for each library (see that file in the
+          # installed weasyprint package) — these must match exactly, they
+          # are not the same as Homebrew's own versioned filenames.
+          copy_lib() {
+            target="$1"
+            pattern="$2"
+            found=$(find "$PREFIX/lib" -maxdepth 1 -name "$pattern" 2>/dev/null | sort | head -n1 || true)
             if [ -n "$found" ]; then
-              cp -n "$found" "$LIBDIR/" || true
+              cp -L "$found" "$LIBDIR/$target"
+              echo "mapped $target <- $found"
+            else
+              echo "WARNING: no source found for $target (pattern $pattern)"
             fi
-          done
+          }
 
+          copy_lib "libgobject-2.0.0.dylib"     "libgobject-2.0.*.dylib"
+          copy_lib "libpango-1.0.dylib"         "libpango-1.0.*.dylib"
+          copy_lib "libharfbuzz.0.dylib"        "libharfbuzz.*.dylib"
+          copy_lib "libharfbuzz-subset.0.dylib" "libharfbuzz-subset.*.dylib"
+          copy_lib "libfontconfig.1.dylib"      "libfontconfig.*.dylib"
+          copy_lib "libpangoft2-1.0.dylib"      "libpangoft2-1.0.*.dylib"
+
+          # Now let dylibbundler walk each of those libraries' own normal
+          # (link-time) dependency chains — glib, intl, pcre2, etc. — and
+          # copy + relink those too.
           for lib in "$LIBDIR"/*.dylib; do
             [ -e "$lib" ] || continue
             dylibbundler -of -b -x "$lib" -d "$LIBDIR" -p "@executable_path/../libs/" || true
           done
           dylibbundler -of -b -x "$BIN" -d "$LIBDIR" -p "@executable_path/../libs/" || true
+
+          echo "--- final libs directory ---"
+          ls -la "$LIBDIR"
 
       - name: Wrap the launcher to point WeasyPrint's native loader at the bundled libs
         run: |
