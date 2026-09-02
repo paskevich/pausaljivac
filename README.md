@@ -1,4 +1,4 @@
-# Paušal 3000
+# Paušaljivac
 
 A local Flask + SQLite web app for managing the business admin of a **paušalac** — a
 flat-rate-taxed sole proprietor (preduzetnik) in Serbia (*paušalno oporezivanje*).

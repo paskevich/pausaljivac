@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Инвойс {{ invoice['invoice_number'] }} — Paušal 3000{% endblock %}
+{% block title %}Инвойс {{ invoice['invoice_number'] }} — Paušaljivac{% endblock %}
 {% block content %}
 <h1>Инвойс {{ invoice['invoice_number'] }}</h1>
 <span class="badge badge-{{ invoice['status'] }}">{{ status_labels[invoice['status']] }}</span>

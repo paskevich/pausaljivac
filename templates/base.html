@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Paušal 3000{% endblock %}</title>
+  <title>{% block title %}Paušaljivac{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <nav class="topnav">
-    <a class="brand" href="{{ url_for('dashboard.index') }}">Paušal 3000</a>
+    <a class="brand" href="{{ url_for('dashboard.index') }}">Paušaljivac</a>
     <a href="{{ url_for('dashboard.index') }}">Дашборд</a>
     <a href="{{ url_for('clients.list_clients') }}">Клиенты</a>
     <a href="{{ url_for('invoices.list_invoices') }}">Инвойсы</a>
