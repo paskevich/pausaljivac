@@ -39,6 +39,12 @@
   <input id="due_date" name="due_date" type="date" value="{{ form.get('due_date', '') }}">
 
   <label for="description">Описание услуги *</label>
+  <select id="description_picker">
+    <option value="">— выбрать из использованных —</option>
+    {% for d in past_descriptions %}
+    <option value="{{ d }}">{{ d }}</option>
+    {% endfor %}
+  </select>
   <textarea id="description" name="description" rows="3" required>{{ form.get('description', '') }}</textarea>
 
   {% if need_manual_rate %}
@@ -56,4 +62,12 @@
     <a class="btn btn-secondary" href="{{ url_for('invoices.list_invoices') }}">Отмена</a>
   </div>
 </form>
+
+<script>
+  document.getElementById("description_picker").addEventListener("change", function () {
+    if (this.value) {
+      document.getElementById("description").value = this.value;
+    }
+  });
+</script>
 {% endblock %}

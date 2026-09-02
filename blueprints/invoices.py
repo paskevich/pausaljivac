@@ -28,6 +28,15 @@ STATUS_LABELS = {
 }
 
 
+def _past_descriptions(db):
+    return [
+        row["description"] for row in db.execute(
+            "SELECT DISTINCT description FROM invoices "
+            "WHERE description != '' ORDER BY description COLLATE NOCASE"
+        ).fetchall()
+    ]
+
+
 @bp.route("/")
 def list_invoices():
     db = get_db()
@@ -81,6 +90,7 @@ def edit_invoice(invoice_id):
         "FROM documents LEFT JOIN clients ON clients.id = documents.client_id "
         "WHERE documents.category = 'contract' ORDER BY documents.title"
     ).fetchall()
+    past_descriptions = _past_descriptions(db)
 
     if request.method == "POST":
         form = request.form
@@ -103,6 +113,7 @@ def edit_invoice(invoice_id):
             return render_template(
                 "invoices/edit_form.html",
                 invoice=invoice, clients=clients, contracts=contracts, form=form,
+                past_descriptions=past_descriptions,
             )
 
         db.execute(
@@ -116,7 +127,8 @@ def edit_invoice(invoice_id):
         return redirect(url_for("invoices.view_invoice", invoice_id=invoice_id))
 
     return render_template(
-        "invoices/edit_form.html", invoice=invoice, clients=clients, contracts=contracts, form=dict(invoice)
+        "invoices/edit_form.html", invoice=invoice, clients=clients, contracts=contracts,
+        form=dict(invoice), past_descriptions=past_descriptions,
     )
 
 
@@ -192,6 +204,7 @@ def new_invoice():
         "FROM documents LEFT JOIN clients ON clients.id = documents.client_id "
         "WHERE documents.category = 'contract' ORDER BY documents.title"
     ).fetchall()
+    past_descriptions = _past_descriptions(db)
 
     if request.method == "POST":
         form = request.form
@@ -239,6 +252,7 @@ def new_invoice():
                 currencies=config.SUPPORTED_CURRENCIES,
                 form=form,
                 need_manual_rate=True,
+                past_descriptions=past_descriptions,
             )
 
         if rate_info.get("fallback"):
@@ -280,7 +294,7 @@ def new_invoice():
         client = db.execute("SELECT * FROM clients WHERE id = ?", (client_id,)).fetchone()
         settings_values = settings_store.get_all()
 
-        pdf_filename = invoice_number.replace("/", "-") + ".pdf"
+        pdf_filename = f"invoice_{invoice_number.replace('/', '-')}.pdf"
         output_path = config.DOCUMENTS_DIR / "invoice" / str(year) / pdf_filename
         pdf_generator.generate_invoice_pdf(
             {
@@ -319,6 +333,7 @@ def new_invoice():
         currencies=config.SUPPORTED_CURRENCIES,
         form={},
         need_manual_rate=False,
+        past_descriptions=past_descriptions,
     )
 
 
@@ -333,6 +348,7 @@ def import_invoice():
         "FROM documents LEFT JOIN clients ON clients.id = documents.client_id "
         "WHERE documents.category = 'contract' ORDER BY documents.title"
     ).fetchall()
+    past_descriptions = _past_descriptions(db)
 
     if request.method == "POST":
         form = request.form
@@ -393,6 +409,7 @@ def import_invoice():
                 currencies=config.SUPPORTED_CURRENCIES,
                 form=form,
                 need_manual_rate=True,
+                past_descriptions=past_descriptions,
             )
 
         if rate_info.get("fallback"):
@@ -420,7 +437,7 @@ def import_invoice():
 
         original_filename = file.filename
         ext = "".join(re.findall(r"\.[A-Za-z0-9]+$", original_filename)) or ".pdf"
-        safe_stub = secure_filename(invoice_number.replace("/", "-")) or f"invoice-{invoice_id}"
+        safe_stub = secure_filename(f"invoice_{invoice_number.replace('/', '-')}") or f"invoice_{invoice_id}"
         pdf_filename = f"{safe_stub}{ext}"
         output_dir = config.DOCUMENTS_DIR / "invoice" / str(year)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -465,4 +482,5 @@ def import_invoice():
         currencies=config.SUPPORTED_CURRENCIES,
         form={},
         need_manual_rate=False,
+        past_descriptions=past_descriptions,
     )

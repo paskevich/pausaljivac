@@ -48,30 +48,39 @@
   <div><button type="submit">Фильтровать</button></div>
 </form>
 
-<table>
-  <thead>
-    <tr><th>Название</th><th>Категория</th><th>Клиент</th><th>Решение</th><th>Период</th><th>Теги</th><th>Загружен</th><th></th></tr>
-  </thead>
-  <tbody>
-    {% for d in documents %}
-    <tr>
-      <td>{{ d['title'] }}</td>
-      <td>{{ category_labels[d['category']] }}</td>
-      <td>{{ d['client_name'] or '—' }}</td>
-      <td>{{ d['resenje_number'] or '—' }}</td>
-      <td>{% if d['period_year'] %}{{ d['period_month'] or '' }} {{ d['period_year'] }}{% else %}—{% endif %}</td>
-      <td>{% if d['tag_names'] %}{% for t in d['tag_names'].split(',') %}<span class="tag">{{ t }}</span>{% endfor %}{% else %}—{% endif %}</td>
-      <td>{{ d['uploaded_at'] }}</td>
-      <td>
-        <a class="btn-secondary" href="{{ url_for('documents.view_document', document_id=d['id']) }}">Просмотр</a>
-        <a class="btn-secondary" href="{{ url_for('documents.edit_document', document_id=d['id']) }}">Редактировать</a>
-        <a class="btn-secondary" href="{{ url_for('documents.download_document', document_id=d['id']) }}">Скачать</a>
-        <a class="btn-secondary" href="{{ url_for('documents.confirm_delete_document', document_id=d['id']) }}">Удалить</a>
-      </td>
-    </tr>
-    {% else %}
-    <tr><td colspan="8">Документов пока нет.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<form method="post" action="{{ url_for('documents.bank_package') }}">
+  <p class="hint">Отметьте документы (например: инвойс, заполненное obaveštenje, договор) и соберите их в отдельную папку — она откроется в проводнике.</p>
+  <table>
+    <thead>
+      <tr><th></th><th>Название</th><th>Категория</th><th>Клиент</th><th>Решение</th><th>Период</th><th>Теги</th><th>Загружен</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for d in documents %}
+      <tr>
+        <td><input type="checkbox" name="document_ids" value="{{ d['id'] }}"></td>
+        <td>{{ d['title'] }}</td>
+        <td>{{ category_labels[d['category']] }}</td>
+        <td>{{ d['client_name'] or '—' }}</td>
+        <td>{{ d['resenje_number'] or '—' }}</td>
+        <td>{% if d['period_year'] %}{{ d['period_month'] or '' }} {{ d['period_year'] }}{% else %}—{% endif %}</td>
+        <td>{% if d['tag_names'] %}{% for t in d['tag_names'].split(',') %}<span class="tag">{{ t }}</span>{% endfor %}{% else %}—{% endif %}</td>
+        <td>{{ d['uploaded_at'] }}</td>
+        <td>
+          <a class="btn-secondary" href="{{ url_for('documents.view_document', document_id=d['id']) }}">Просмотр</a>
+          <a class="btn-secondary" href="{{ url_for('documents.edit_document', document_id=d['id']) }}">Редактировать</a>
+          <a class="btn-secondary" href="{{ url_for('documents.download_document', document_id=d['id']) }}">Скачать</a>
+          <a class="btn-secondary" href="{{ url_for('documents.confirm_delete_document', document_id=d['id']) }}">Удалить</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9">Документов пока нет.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if documents %}
+  <div class="actions">
+    <button type="submit">Собрать пакет для банка из отмеченных</button>
+  </div>
+  {% endif %}
+</form>
 {% endblock %}

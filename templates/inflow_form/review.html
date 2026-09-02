@@ -20,7 +20,16 @@
   <input type="hidden" name="invoice_id" value="{{ invoice['id'] if invoice else '' }}">
 
   <label for="invoice_number">Номер инвойса (Br. fakture/prof.) *</label>
-  <input id="invoice_number" name="invoice_number" required value="{{ parsed.invoice_number }}">
+  <div class="inline-group">
+    <input id="invoice_number" name="invoice_number" required value="{{ parsed.invoice_number }}">
+    <select id="invoice_picker">
+      <option value="">— подгрузить инвойс из существующих —</option>
+      {% for opt in invoice_options %}
+      <option value="{{ opt.id }}">{{ opt.invoice_number }} — {{ opt.client_name }}{% if opt.date_display %} ({{ opt.date_display }}){% endif %}</option>
+      {% endfor %}
+    </select>
+    <button type="button" id="invoice_picker_apply" class="btn btn-secondary">Подгрузить</button>
+  </div>
 
   <label>Сумма (Iznos bruto potraživanja)</label>
   <input value="{{ parsed.currency }} {{ parsed.amount_display }}" disabled>
@@ -43,4 +52,26 @@
     <a class="btn btn-secondary" href="{{ url_for('inflow_form.upload') }}">Отмена</a>
   </div>
 </form>
+
+<script>
+  const INVOICE_OPTIONS = {{ invoice_options | tojson }};
+
+  function applyInvoicePick() {
+    const picker = document.getElementById("invoice_picker");
+    const selected = INVOICE_OPTIONS.find((opt) => String(opt.id) === picker.value);
+    if (!selected) {
+      return;
+    }
+    document.getElementById("invoice_number").value = selected.invoice_number;
+    document.querySelector('input[name="invoice_id"]').value = selected.id;
+    if (selected.date_display) {
+      document.getElementById("invoice_date_display").value = selected.date_display;
+    }
+  }
+
+  // Auto-pull number + date as soon as an invoice is picked; the button
+  // stays as an explicit re-apply if the fields were edited afterwards.
+  document.getElementById("invoice_picker").addEventListener("change", applyInvoicePick);
+  document.getElementById("invoice_picker_apply").addEventListener("click", applyInvoicePick);
+</script>
 {% endblock %}

@@ -1,4 +1,9 @@
+import logging
+import shutil
+import subprocess
 import uuid
+from datetime import datetime
+from pathlib import Path
 
 from flask import (
     Blueprint,
@@ -16,6 +21,7 @@ import config
 from database import get_db
 
 bp = Blueprint("documents", __name__, url_prefix="/documents")
+logger = logging.getLogger(__name__)
 
 CATEGORY_LABELS = {
     "resenje": "Решение налоговой",
@@ -246,6 +252,61 @@ def delete_document(document_id):
         file_path.unlink()
 
     flash("Документ удалён.", "success")
+    return redirect(url_for("documents.list_documents"))
+
+
+def _open_in_explorer(path):
+    """Best-effort: this app runs inside WSL2 (see run.bat), so the folder
+    has to be opened via the Windows-side explorer.exe, with the path
+    translated from a WSL /mnt/... path to a Windows one first."""
+    try:
+        win_path = subprocess.run(
+            ["wslpath", "-w", str(path)], capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        # explorer.exe routinely exits non-zero even on success — Popen and
+        # don't check the return code.
+        subprocess.Popen(["explorer.exe", win_path])
+    except Exception:
+        logger.exception("Failed to open %s in Explorer", path)
+
+
+@bp.route("/bank-package", methods=["POST"])
+def bank_package():
+    db = get_db()
+    ids = request.form.getlist("document_ids")
+    if not ids:
+        flash("Выберите хотя бы один документ для пакета.", "error")
+        return redirect(url_for("documents.list_documents"))
+
+    placeholders = ",".join("?" for _ in ids)
+    docs = db.execute(
+        f"SELECT * FROM documents WHERE id IN ({placeholders})", ids
+    ).fetchall()
+    if not docs:
+        abort(404)
+
+    folder_name = f"bank_package_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    target_dir = config.BANK_PACKAGE_DIR / folder_name
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    copied = 0
+    for doc in docs:
+        src = config.DOCUMENTS_DIR / doc["file_path"]
+        if not src.exists():
+            continue
+        dest_name = doc["original_filename"] or Path(doc["file_path"]).name
+        dest = target_dir / dest_name
+        stem, suffix = Path(dest_name).stem, Path(dest_name).suffix
+        n = 1
+        while dest.exists():
+            dest = target_dir / f"{stem}_{n}{suffix}"
+            n += 1
+        shutil.copy2(src, dest)
+        copied += 1
+
+    _open_in_explorer(target_dir)
+
+    flash(f"Пакет из {copied} документов сохранён в {target_dir} и открыт в проводнике.", "success")
     return redirect(url_for("documents.list_documents"))
 
 

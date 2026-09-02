@@ -38,6 +38,10 @@ form.stacked-form input, form.stacked-form select, form.stacked-form textarea {
   width: 100%; padding: 0.45rem; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem;
 }
 form.stacked-form .actions { margin-top: 1.25rem; }
+form.stacked-form .inline-group { display: flex; gap: 0.5rem; align-items: center; }
+form.stacked-form .inline-group input { flex: 1 1 auto; width: auto; }
+form.stacked-form .inline-group select { flex: 1 1 auto; width: auto; }
+form.stacked-form .inline-group button { flex: 0 0 auto; }
 .hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
 
 button, .btn {

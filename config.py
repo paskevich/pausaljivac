@@ -7,6 +7,9 @@ DOCUMENTS_DIR = DATA_DIR / "documents"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 SIGNATURE_PATH = DATA_DIR / "signature.png"
 TMP_DIR = DATA_DIR / "tmp"
+LOG_DIR = DATA_DIR / "logs"
+LOG_PATH = LOG_DIR / "app.log"
+BANK_PACKAGE_DIR = DATA_DIR / "bank_packages"
 
 DOCUMENT_CATEGORIES = ["resenje", "contract", "other", "invoice", "bank_report"]
 
