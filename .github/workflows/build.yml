@@ -74,10 +74,6 @@ jobs:
           mkdir -p "$LIBDIR"
 
           PREFIX=$(brew --prefix)
-          LIBS=$(python3 -c "
-import cairocffi, glob, os
-print(os.path.dirname(cairocffi.cairo.__file__) if hasattr(cairocffi, 'cairo') else '')
-" 2>/dev/null || true)
 
           # Copy every dylib WeasyPrint's native bindings might dlopen by name,
           # then let dylibbundler pull in their own recursive dependencies too.
@@ -100,12 +96,12 @@ print(os.path.dirname(cairocffi.cairo.__file__) if hasattr(cairocffi, 'cairo') e
           APP="dist/Pausaljivac.app"
           MACOS_DIR="$APP/Contents/MacOS"
           mv "$MACOS_DIR/Pausaljivac" "$MACOS_DIR/Pausaljivac.bin"
-          cat > "$MACOS_DIR/Pausaljivac" <<'EOF'
-#!/bin/bash
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export DYLD_LIBRARY_PATH="$DIR/../libs:$DYLD_LIBRARY_PATH"
-exec "$DIR/Pausaljivac.bin" "$@"
-EOF
+          {
+            printf '%s\n' '#!/bin/bash'
+            printf '%s\n' 'DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'
+            printf '%s\n' 'export DYLD_LIBRARY_PATH="$DIR/../libs:$DYLD_LIBRARY_PATH"'
+            printf '%s\n' 'exec "$DIR/Pausaljivac.bin" "$@"'
+          } > "$MACOS_DIR/Pausaljivac"
           chmod +x "$MACOS_DIR/Pausaljivac"
 
       - name: Zip the .app
