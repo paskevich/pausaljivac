@@ -24,6 +24,17 @@ your browser automatically.
 > Windows build keeps a console window open; on macOS run it from Terminal via
 > `Pausaljivac.app/Contents/MacOS/Pausaljivac` to see output).
 
+> **Windows SmartScreen:** same idea as the macOS note below — the exe isn't
+> code-signed, so you'll likely see "Windows protected your PC". Click **More info** →
+> **Run anyway**.
+
+> **macOS Gatekeeper:** the app isn't code-signed/notarized (that needs a paid Apple
+> Developer account), so macOS will refuse to open it with "cannot be opened because the
+> developer cannot be verified" the first time. Right-click (or Control-click)
+> `Pausaljivac.app` → **Open** → confirm in the dialog that appears — this only needs doing
+> once. (If that doesn't work: System Settings → Privacy & Security → scroll down to the
+> blocked-app notice → **Open Anyway**.)
+
 The rest of this section is for running from source (also how Linux/WSL2 users run it).
 
 ## Requirements
