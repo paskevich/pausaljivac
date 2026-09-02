@@ -1,0 +1,132 @@
+name: Build desktop packages
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Install GTK3 runtime (WeasyPrint's Pango/Cairo/GDK-Pixbuf on Windows)
+        shell: pwsh
+        run: |
+          $ProgressPreference = "SilentlyContinue"
+          Invoke-WebRequest -Uri "https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe" -OutFile gtk-installer.exe
+          Start-Process -FilePath .\gtk-installer.exe -ArgumentList "/S" -Wait
+
+      - name: Build with PyInstaller
+        run: pyinstaller pausaljivac.spec
+
+      - name: Bundle GTK DLLs alongside the executable
+        shell: pwsh
+        run: |
+          Copy-Item "C:\Program Files\GTK3-Runtime Win64\bin\*.dll" -Destination "dist\Pausaljivac\" -Force
+
+      - name: Zip the build
+        shell: pwsh
+        run: Compress-Archive -Path "dist\Pausaljivac\*" -DestinationPath "Pausaljivac-windows.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pausaljivac-windows
+          path: Pausaljivac-windows.zip
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install native dependencies (WeasyPrint's Pango/Cairo via Homebrew)
+        run: |
+          brew install pango dylibbundler
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller pausaljivac.spec
+
+      - name: Bundle Homebrew dylibs into the .app (WeasyPrint loads them at runtime via cffi, not link-time, so they won't show up as normal dependencies)
+        run: |
+          set -e
+          APP="dist/Pausaljivac.app"
+          BIN="$APP/Contents/MacOS/Pausaljivac"
+          LIBDIR="$APP/Contents/libs"
+          mkdir -p "$LIBDIR"
+
+          PREFIX=$(brew --prefix)
+          LIBS=$(python3 -c "
+import cairocffi, glob, os
+print(os.path.dirname(cairocffi.cairo.__file__) if hasattr(cairocffi, 'cairo') else '')
+" 2>/dev/null || true)
+
+          # Copy every dylib WeasyPrint's native bindings might dlopen by name,
+          # then let dylibbundler pull in their own recursive dependencies too.
+          for name in cairo pango-1.0 pangocairo-1.0 gobject-2.0 glib-2.0 gdk_pixbuf-2.0 fontconfig harfbuzz; do
+            found=$(find "$PREFIX/lib" -maxdepth 1 -name "lib${name}*.dylib" 2>/dev/null | head -n1 || true)
+            if [ -n "$found" ]; then
+              cp -n "$found" "$LIBDIR/" || true
+            fi
+          done
+
+          for lib in "$LIBDIR"/*.dylib; do
+            [ -e "$lib" ] || continue
+            dylibbundler -of -b -x "$lib" -d "$LIBDIR" -p "@executable_path/../libs/" || true
+          done
+          dylibbundler -of -b -x "$BIN" -d "$LIBDIR" -p "@executable_path/../libs/" || true
+
+      - name: Wrap the launcher to point WeasyPrint's native loader at the bundled libs
+        run: |
+          set -e
+          APP="dist/Pausaljivac.app"
+          MACOS_DIR="$APP/Contents/MacOS"
+          mv "$MACOS_DIR/Pausaljivac" "$MACOS_DIR/Pausaljivac.bin"
+          cat > "$MACOS_DIR/Pausaljivac" <<'EOF'
+#!/bin/bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DYLD_LIBRARY_PATH="$DIR/../libs:$DYLD_LIBRARY_PATH"
+exec "$DIR/Pausaljivac.bin" "$@"
+EOF
+          chmod +x "$MACOS_DIR/Pausaljivac"
+
+      - name: Zip the .app
+        run: ditto -c -k --sequesterRsrc --keepParent dist/Pausaljivac.app Pausaljivac-macos.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pausaljivac-macos
+          path: Pausaljivac-macos.zip
+
+  release:
+    needs: [windows, macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/Pausaljivac-windows/Pausaljivac-windows.zip
+            artifacts/Pausaljivac-macos/Pausaljivac-macos.zip

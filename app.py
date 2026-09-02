@@ -71,4 +71,14 @@ app = create_app()
 
 if __name__ == "__main__":
     database.init_db()
-    app.run(debug=True, port=5000)
+    if config.FROZEN:
+        # Packaged build (PyInstaller): no dev reloader (it re-execs the
+        # process, which is a mess for a frozen binary) and no console the
+        # user is watching, so open the browser for them.
+        import threading
+        import webbrowser
+
+        threading.Timer(1.5, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
+        app.run(debug=False, use_reloader=False, port=5000)
+    else:
+        app.run(debug=True, port=5000)

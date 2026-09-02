@@ -9,7 +9,22 @@ generation, and filling/signing the bank's "Obaveštenje o prilivu" form for for
 currency inflows.
 
 This is a single-user, local-only tool — it has no authentication and is meant to run on
-`localhost`, not be exposed to a network.
+`localhost`, not be exposed to a network. Each person runs their own copy with their own
+data; it's not something you'd host centrally for a group.
+
+## Just want to run it? (Windows / macOS)
+
+Grab the latest build from the [Releases](../../releases) page — `Pausaljivac-windows.zip`
+or `Pausaljivac-macos.zip` — unzip it, and run `Pausaljivac.exe` (Windows) or
+`Pausaljivac.app` (macOS). No Python install needed. It opens `http://localhost:5000` in
+your browser automatically.
+
+> These builds are new and not heavily field-tested yet — if one doesn't start on your
+> machine, please open an issue with what OS/version you're on and any error output (the
+> Windows build keeps a console window open; on macOS run it from Terminal via
+> `Pausaljivac.app/Contents/MacOS/Pausaljivac` to see output).
+
+The rest of this section is for running from source (also how Linux/WSL2 users run it).
 
 ## Requirements
 
@@ -60,6 +75,11 @@ those.
   invoice numbering, income-limit math, the bank-form PDF overlay)
 - `templates/` / `static/` — Jinja2 templates and CSS
 
+## Contributing
+
+Bug reports, fixes, and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Forking
+for your own customized version needs no permission either.
+
 ## License
 
-Not yet specified — treat as all-rights-reserved until a LICENSE file is added.
+[MIT](LICENSE).

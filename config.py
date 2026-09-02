@@ -1,10 +1,34 @@
+import os
+import sys
 from pathlib import Path
 
+FROZEN = getattr(sys, "frozen", False)
+
+
+def _packaged_user_data_dir():
+    """Where a packaged (PyInstaller) build keeps its data. Never the
+    bundle's own extraction dir (sys._MEIPASS/the .exe's folder) — on
+    macOS that's inside the read-only .app bundle, and PyInstaller's
+    onefile mode re-extracts to a fresh temp dir on every launch, so
+    anything written there is lost the moment the app closes."""
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA") or str(Path.home())
+        return Path(base) / "Pausaljivac"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Pausaljivac"
+    return Path.home() / ".local" / "share" / "pausaljivac"
+
+
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+# PyInstaller extracts bundled data files (schema.sql, templates/, static/)
+# under sys._MEIPASS at runtime; that's read-only reference data, fine to
+# read from there, but never a place to write persistent data (see above).
+BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", BASE_DIR))
+
+DATA_DIR = _packaged_user_data_dir() if FROZEN else BASE_DIR / "data"
 DB_PATH = DATA_DIR / "app.db"
 DOCUMENTS_DIR = DATA_DIR / "documents"
-SCHEMA_PATH = BASE_DIR / "schema.sql"
+SCHEMA_PATH = BUNDLE_DIR / "schema.sql"
 SIGNATURE_PATH = DATA_DIR / "signature.png"
 TMP_DIR = DATA_DIR / "tmp"
 LOG_DIR = DATA_DIR / "logs"
