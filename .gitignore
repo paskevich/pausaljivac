@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Defense in depth in case these ever end up outside data/
+*.db
+*.db-journal
+*.log
+.env
+.env.*
