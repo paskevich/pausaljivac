@@ -131,6 +131,32 @@ jobs:
           done
           dylibbundler -of -b -x "$BIN" -d "$LIBDIR" -p "@executable_path/../libs/" || true
 
+          # Our 6 explicitly-named libraries also depend on each other under
+          # their ORIGINAL Homebrew filenames (e.g. pangoft2 links against
+          # "libpango-1.0.0.dylib", not our renamed "libpango-1.0.dylib").
+          # dylibbundler doesn't know those two names are the same library,
+          # so it copies a second, differently-named duplicate when it walks
+          # that dependency — and GObject aborts at runtime ("cannot
+          # register existing type") if both copies end up loaded in the
+          # same process. De-duplicate by content hash: replace any exact
+          # duplicate with a symlink to the canonical file, so dyld resolves
+          # both paths to the same image and only loads it once.
+          echo "--- de-duplicating identical libraries under different names ---"
+          for canonical in "$LIBDIR"/*.dylib; do
+            [ -e "$canonical" ] && [ ! -L "$canonical" ] || continue
+            canon_sum=$(shasum -a 256 "$canonical" | awk '{print $1}')
+            for other in "$LIBDIR"/*.dylib; do
+              [ -e "$other" ] && [ ! -L "$other" ] || continue
+              [ "$other" = "$canonical" ] && continue
+              other_sum=$(shasum -a 256 "$other" | awk '{print $1}')
+              if [ "$other_sum" = "$canon_sum" ]; then
+                echo "deduping $(basename "$other") -> $(basename "$canonical")"
+                rm -f "$other"
+                ln -s "$(basename "$canonical")" "$other"
+              fi
+            done
+          done
+
           echo "--- final libs directory ---"
           ls -la "$LIBDIR"
 
@@ -141,7 +167,7 @@ jobs:
           # every binary it touched needs a fresh ad-hoc signature.
           echo "--- re-signing modified binaries ---"
           for lib in "$LIBDIR"/*.dylib; do
-            [ -e "$lib" ] || continue
+            [ -e "$lib" ] && [ ! -L "$lib" ] || continue
             codesign --force -s - "$lib"
           done
           codesign --force -s - "$BIN"
